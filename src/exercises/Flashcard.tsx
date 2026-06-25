@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { FlashcardExercise } from '../data/curriculum'
 import { speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import type { ExerciseProps } from './shared'
 
 /* Méthode 1 — DÉCOUVERTE multisensorielle.
@@ -54,6 +55,9 @@ export function Flashcard({
         <span style={{ fontSize: '1.5rem' }}>🔊</span>
         <span style={{ fontWeight: 900, fontSize: '1.6rem' }}>{word.fr}</span>
       </button>
+      <div style={{ alignSelf: 'center' }}>
+        <SpeedControl preview={word.fr} />
+      </div>
       {exercise.hint && <p className="muted">{exercise.hint}</p>}
       <button className="btn" onClick={() => onDone(true)}>
         J’ai compris ! →

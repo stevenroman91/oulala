@@ -18,7 +18,7 @@ principes adaptés au **jeune apprenant** :
 | Principe | Comment c'est appliqué |
 | --- | --- |
 | **Temps d'attention court** | Leçons de **3–5 min** (4–7 micro-exercices), pas de murs de texte. |
-| **Audio d'abord** | Tout se prononce : un enfant peut **réécouter** chaque mot à volonté. |
+| **Audio d'abord** | Tout se prononce : un enfant peut **réécouter** chaque mot à volonté, et la **vitesse de lecture** est réglable (🐢 / 🙂 / 🐇). La voix laisse toujours finir la phrase avant de passer à la suite. |
 | **Multi-méthodes** | 8 types d'exercices pour varier les stimuli et éviter la lassitude. |
 | **Feedback positif** | Erreurs non punitives (son doux, on réessaie), encouragements constants. |
 | **Gamification douce** | Étoiles, points (XP), **série de jours** 🔥, carte d'îles à débloquer. |
@@ -117,21 +117,35 @@ que l'app fonctionne.
 Copiez `.env.example` en `.env` et renseignez ce que vous voulez activer.
 **Toutes sont facultatives** — sans elles, l'app utilise les voix du navigateur.
 
+**Côté client** (exposé au navigateur — préfixe `VITE_`) :
+
 | Variable | Rôle |
 | --- | --- |
-| `VITE_ELEVENLABS_API_KEY` | Voix premium ElevenLabs (TTS des mots). |
-| `VITE_ELEVENLABS_VOICE_ID` | Voix française à utiliser pour Lumi. |
-| `VITE_ELEVENLABS_AGENT_ID` | Active l'agent conversationnel temps réel dans « Parle avec Lumi ». |
+| `VITE_ELEVENLABS_AGENT_ID` | Active l'agent conversationnel temps réel dans « Parle avec Lumi ». L'`agent-id` est public/intégrable : OK côté client. |
 
-> ⚠️ Ces variables `VITE_*` sont **exposées au client**. Pour le TTS, utilisez
-> une clé ElevenLabs **restreinte**. L'agent conversationnel, lui, est conçu
-> pour être intégré côté client via son `agent-id`.
+**Côté serveur** (SECRET — jamais envoyé au navigateur, lu par `server.js`) :
+
+| Variable | Rôle |
+| --- | --- |
+| `ELEVENLABS_API_KEY` | Clé API ElevenLabs pour le proxy de synthèse vocale `/api/tts`. **Reste sur le serveur.** |
+| `ELEVENLABS_VOICE_ID` | Voix utilisée pour prononcer les mots. **Mettez la MÊME que celle de votre agent** pour que la voix de l'app « colle » à celle de la conversation. |
+| `ELEVENLABS_MODEL_ID` | (Optionnel) modèle TTS. Défaut : `eleven_multilingual_v2`. |
+
+> ✅ **Pourquoi un proxy serveur ?** Mettre une clé API dans une variable `VITE_*`
+> l'exposerait en clair dans le navigateur. Ici, le client appelle `/api/tts` ;
+> `server.js` ajoute la clé **côté serveur** et renvoie l'audio. La clé ne quitte
+> jamais le serveur. Et comme on réutilise le même `ELEVENLABS_VOICE_ID` que
+> l'agent, la voix des mots et la voix de la conversation sont **identiques**.
+>
+> En dev (`npm run dev`), ce proxy n'existe pas : l'app utilise alors la voix du
+> navigateur. La voix premium s'active en production (`npm start` / Railway) une
+> fois les variables renseignées.
 
 ---
 
 ## 🗺️ Pistes d'évolution
 
-- Contenu CE2 → CM2 (gabarits déjà en place dans `curriculum.ts`).
+- Contenu CE2 → CM2 (ajouter `src/data/ce2.ts`… sur le modèle de `cp.ts`).
 - Dictée vocale (reconnaissance) pour valider la prononciation de l'enfant.
 - Espace parents (suivi des progrès, durée de jeu, objectifs hebdo).
 - Plus d'illustrations dédiées (remplacer les emojis par des assets maison).

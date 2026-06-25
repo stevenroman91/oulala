@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ReadingExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 8 — LECTURE & COMPRÉHENSION.
@@ -62,24 +63,29 @@ export function Reading({
         >
           {exercise.text}
         </div>
-        <button
-          onClick={() => {
-            setReveal(true)
-            speak(exercise.text)
-          }}
+        <div
           className="row"
-          style={{
-            margin: '14px auto 0',
-            gap: 10,
-            background: 'var(--cream)',
-            borderRadius: 999,
-            padding: '10px 18px',
-            fontWeight: 800,
-          }}
+          style={{ justifyContent: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}
         >
-          <span style={{ fontSize: '1.2rem' }}>🔊</span>
-          {reveal ? 'Réécouter' : 'Écouter la phrase'}
-        </button>
+          <button
+            onClick={() => {
+              setReveal(true)
+              speak(exercise.text)
+            }}
+            className="row"
+            style={{
+              gap: 10,
+              background: 'var(--cream)',
+              borderRadius: 999,
+              padding: '10px 18px',
+              fontWeight: 800,
+            }}
+          >
+            <span style={{ fontSize: '1.2rem' }}>🔊</span>
+            {reveal ? 'Réécouter' : 'Écouter la phrase'}
+          </button>
+          <SpeedControl preview={exercise.text} />
+        </div>
       </motion.div>
 
       {/* La question */}
@@ -104,11 +110,13 @@ export function Reading({
             className="card center stack"
             style={{
               gap: 6,
-              padding: 14,
+              padding: '18px 12px',
+              minHeight: 120,
+              justifyContent: 'center',
               outline: wrong === opt.fr ? '4px solid var(--soft-red)' : 'none',
             }}
           >
-            <span style={{ fontSize: '2.6rem' }}>{opt.emoji}</span>
+            <span style={{ fontSize: '3.6rem', lineHeight: 1 }}>{opt.emoji}</span>
             <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>{opt.fr}</span>
           </motion.button>
         ))}

@@ -19,10 +19,10 @@ export function Conjugate({
 
   const liaison = exercise.pronoun.endsWith('’') ? '' : ' '
 
-  function choose(form: string) {
+  async function choose(form: string) {
     if (form === exercise.answer) {
       playCorrect()
-      speak(`${exercise.pronoun}${liaison}${exercise.answer}`)
+      await speak(`${exercise.pronoun}${liaison}${exercise.answer}`)
       onDone(!missed)
     } else {
       playWrong()

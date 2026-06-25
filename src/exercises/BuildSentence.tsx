@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { motion } from 'framer-motion'
 import type { BuildSentenceExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 4 — SYNTAXE / CONSTRUCTION DE PHRASE.
@@ -31,11 +32,11 @@ export function BuildSentence({
   const available = bank.filter((b) => !picked.some((p) => p.key === b.key))
   const isFull = picked.length === target.length
 
-  function check() {
+  async function check() {
     const made = picked.map((p) => p.w).join(' ')
     if (made === exercise.sentence) {
       playCorrect()
-      speak(exercise.sentence)
+      await speak(exercise.sentence) // on laisse la phrase se terminer
       onDone(!missed)
     } else {
       playWrong()
@@ -54,7 +55,8 @@ export function BuildSentence({
         <button className="audio-pill" onClick={() => speak(exercise.sentence)}>
           🔊
         </button>
-        <p style={{ fontWeight: 800 }}>Remets la phrase dans l’ordre</p>
+        <p style={{ fontWeight: 800, flex: 1 }}>Remets la phrase</p>
+        <SpeedControl preview={exercise.sentence} />
       </div>
 
       {exercise.emoji && (

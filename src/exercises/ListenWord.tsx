@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ListenWordExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 3 — DISCRIMINATION DES SONS / LECTURE.
@@ -45,6 +46,7 @@ export function ListenWord({
           🔊
         </button>
         <p style={{ fontWeight: 800 }}>Quel mot entends-tu&nbsp;?</p>
+        <SpeedControl preview={exercise.answer} />
       </div>
 
       <div className="stack" style={{ flex: 1, justifyContent: 'center' }}>

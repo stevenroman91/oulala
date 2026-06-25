@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { LevelId } from '../data/curriculum'
+import { setMuted, setSpeechRate } from '../services/audio'
 
 /* ============================================================
    Profil & progression de l'enfant (persistés en localStorage).
@@ -30,7 +31,15 @@ export interface Profile {
   streak: number
   lastActiveDate: string | null // AAAA-MM-JJ
   soundOn: boolean
+  rate: number // vitesse de lecture de la voix (0.6 lent → 1.1 rapide)
 }
+
+/** Vitesses proposées à l'enfant. */
+export const SPEECH_RATES = [
+  { id: 'slow', label: 'Lent', icon: '🐢', value: 0.65 },
+  { id: 'normal', label: 'Normal', icon: '🙂', value: 0.9 },
+  { id: 'fast', label: 'Rapide', icon: '🐇', value: 1.1 },
+] as const
 
 const DEFAULT_PROFILE: Profile = {
   name: '',
@@ -41,6 +50,7 @@ const DEFAULT_PROFILE: Profile = {
   streak: 0,
   lastActiveDate: null,
   soundOn: true,
+  rate: 0.9,
 }
 
 const STORAGE_KEY = 'lumi.profile.v1'
@@ -76,6 +86,7 @@ interface ProfileContextValue {
   setLevel: (level: LevelId) => void
   recordLesson: (lessonId: string, stars: number, scorePct: number) => void
   toggleSound: () => void
+  setRate: (rate: number) => void
   reset: () => void
 }
 
@@ -91,6 +102,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       /* stockage indisponible : on continue sans persistance */
     }
   }, [profile])
+
+  // Synchronise les réglages voix avec le service audio.
+  useEffect(() => {
+    setSpeechRate(profile.rate)
+    setMuted(!profile.soundOn)
+  }, [profile.rate, profile.soundOn])
 
   const createProfile = useCallback(
     (data: { name: string; avatar: string; level: LevelId }) => {
@@ -144,6 +161,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setProfile((p) => ({ ...p, soundOn: !p.soundOn }))
   }, [])
 
+  const setRate = useCallback((rate: number) => {
+    setProfile((p) => ({ ...p, rate }))
+  }, [])
+
   const reset = useCallback(() => {
     setProfile(DEFAULT_PROFILE)
   }, [])
@@ -156,9 +177,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setLevel,
       recordLesson,
       toggleSound,
+      setRate,
       reset,
     }),
-    [profile, createProfile, setLevel, recordLesson, toggleSound, reset],
+    [profile, createProfile, setLevel, recordLesson, toggleSound, setRate, reset],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

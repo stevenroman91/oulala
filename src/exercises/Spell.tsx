@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { SpellExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 6 — ORTHOGRAPHE.
@@ -40,7 +41,7 @@ export function Spell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise])
 
-  function pick(letter: string) {
+  async function pick(letter: string) {
     if (nextIndex === undefined) return
     const expected = letters[nextIndex].toLowerCase()
     if (letter === expected) {
@@ -49,8 +50,8 @@ export function Spell({
       const complete = exercise.missing.every((i) => i in filledNext)
       if (complete) {
         playCorrect()
-        speak(exercise.word.fr)
-        setTimeout(() => onDone(!missed), 300)
+        await speak(exercise.word.fr) // on laisse le mot se prononcer en entier
+        onDone(!missed)
       } else {
         playCorrect()
       }
@@ -68,7 +69,8 @@ export function Spell({
         <button className="audio-pill" onClick={() => speak(exercise.word.fr)}>
           🔊
         </button>
-        <p style={{ fontWeight: 800 }}>Complète le mot</p>
+        <p style={{ fontWeight: 800, flex: 1 }}>Complète le mot</p>
+        <SpeedControl preview={exercise.word.fr} />
       </div>
 
       <div className="center" style={{ fontSize: '3.6rem' }}>

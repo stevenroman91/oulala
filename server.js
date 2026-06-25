@@ -38,7 +38,12 @@ async function sendFile(res, filePath, status = 200) {
 // conversationnel, sans jamais exposer la clé API au navigateur.
 const EL_KEY = process.env.ELEVENLABS_API_KEY
 const EL_VOICE = process.env.ELEVENLABS_VOICE_ID
-const EL_MODEL = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2'
+// turbo_v2_5 supporte l'ENFORCEMENT de la langue (language_code), ce qui évite
+// que des mots courts homographes de l'anglais (« chat », « a »…) soient
+// prononcés à l'anglaise. Surchargeable via ELEVENLABS_MODEL_ID.
+const EL_MODEL = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5'
+// On force le français quand le modèle le permet (turbo / flash).
+const EL_FORCE_FR = /turbo|flash/.test(EL_MODEL)
 
 function readBody(req) {
   return new Promise((resolve) => {
@@ -67,6 +72,8 @@ async function ttsSynthesize(text) {
         text,
         model_id: EL_MODEL,
         voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        // Force la prononciation française quand le modèle le supporte.
+        ...(EL_FORCE_FR ? { language_code: 'fr' } : {}),
       }),
     },
   )
@@ -140,7 +147,16 @@ const server = createServer(async (req, res) => {
       // POST : utilisé par l'app. GET : test audible à ouvrir dans le
       // navigateur (joue une phrase de Lumi, ou affiche l'erreur ElevenLabs).
       if (req.method === 'POST') return handleTts(req, res)
-      if (req.method === 'GET') return handleTts(req, res, TTS_TEST_TEXT)
+      if (req.method === 'GET') {
+        // Test audible. ?text=poule pour tester un mot précis.
+        let q = ''
+        try {
+          q = new URL(req.url, 'http://localhost').searchParams.get('text') || ''
+        } catch {
+          q = ''
+        }
+        return handleTts(req, res, q.slice(0, 400) || TTS_TEST_TEXT)
+      }
       res.writeHead(405).end()
       return
     }

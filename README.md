@@ -129,7 +129,7 @@ Copiez `.env.example` en `.env` et renseignez ce que vous voulez activer.
 | --- | --- |
 | `ELEVENLABS_API_KEY` | Clé API ElevenLabs pour le proxy de synthèse vocale `/api/tts`. **Reste sur le serveur.** |
 | `ELEVENLABS_VOICE_ID` | Voix utilisée pour prononcer les mots. **Mettez la MÊME que celle de votre agent** pour que la voix de l'app « colle » à celle de la conversation. |
-| `ELEVENLABS_MODEL_ID` | (Optionnel) modèle TTS. Défaut : `eleven_multilingual_v2`. |
+| `ELEVENLABS_MODEL_ID` | (Optionnel) modèle TTS. Défaut : `eleven_turbo_v2_5`, qui force `language_code=fr` pour une prononciation française fiable même sur les mots courts (« chat », « a »…). |
 
 > ✅ **Pourquoi un proxy serveur ?** Mettre une clé API dans une variable `VITE_*`
 > l'exposerait en clair dans le navigateur. Ici, le client appelle `/api/tts` ;

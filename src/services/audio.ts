@@ -86,22 +86,63 @@ async function playWithServer(text: string): Promise<boolean> {
   }
 }
 
-let frenchVoice: SpeechSynthesisVoice | null = null
-function pickFrenchVoice(): SpeechSynthesisVoice | null {
-  if (frenchVoice) return frenchVoice
-  if (!('speechSynthesis' in window)) return null
-  const voices = window.speechSynthesis.getVoices()
-  frenchVoice =
-    voices.find((v) => v.lang === 'fr-FR') ||
-    voices.find((v) => v.lang.startsWith('fr')) ||
-    null
-  return frenchVoice
+let cachedFrenchVoice: SpeechSynthesisVoice | null = null
+let frenchVoiceMissing = false
+
+/** Vrai si aucune voix française n'est installée sur l'appareil — dans ce
+ *  cas, seule la voix premium ElevenLabs donne une vraie prononciation. */
+export function isFrenchVoiceMissing(): boolean {
+  return frenchVoiceMissing
+}
+
+function chooseFrench(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const fr = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith('fr'))
+  if (!fr.length) return null
+  return (
+    fr.find((v) => v.lang.toLowerCase() === 'fr-fr') ||
+    fr.find((v) => /fran|french/i.test(v.name)) ||
+    fr[0]
+  )
+}
+
+// Les voix se chargent souvent de façon ASYNCHRONE : la première lecture
+// peut partir avant qu'elles soient prêtes → voix anglaise par défaut.
+function getVoicesAsync(): Promise<SpeechSynthesisVoice[]> {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window)) return resolve([])
+    const now = window.speechSynthesis.getVoices()
+    if (now.length) return resolve(now)
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      resolve(window.speechSynthesis.getVoices())
+    }
+    try {
+      window.speechSynthesis.addEventListener('voiceschanged', finish, { once: true })
+    } catch {
+      /* navigateur sans addEventListener sur speechSynthesis */
+    }
+    setTimeout(finish, 1200)
+  })
+}
+
+let voiceResolved = false
+async function resolveFrenchVoice(): Promise<SpeechSynthesisVoice | null> {
+  if (voiceResolved) return cachedFrenchVoice
+  const voices = await getVoicesAsync()
+  cachedFrenchVoice = chooseFrench(voices)
+  frenchVoiceMissing = !cachedFrenchVoice
+  voiceResolved = true
+  return cachedFrenchVoice
 }
 
 /** Voix du navigateur. Résout quand la lecture est terminée. */
-function speakWithBrowser(text: string, rate: number): Promise<void> {
+async function speakWithBrowser(text: string, rate: number): Promise<void> {
+  if (!('speechSynthesis' in window)) return
+  // On s'assure d'avoir une vraie voix française AVANT de parler.
+  const voice = await resolveFrenchVoice()
   return new Promise((resolve) => {
-    if (!('speechSynthesis' in window)) return resolve()
     let done = false
     const finish = () => {
       if (done) return
@@ -112,7 +153,6 @@ function speakWithBrowser(text: string, rate: number): Promise<void> {
     utter.lang = 'fr-FR'
     utter.rate = rate
     utter.pitch = 1.05
-    const voice = pickFrenchVoice()
     if (voice) utter.voice = voice
     utter.onend = finish
     utter.onerror = finish
@@ -139,11 +179,12 @@ export async function speak(
   await speakWithBrowser(text, opts.rate ?? defaultRate)
 }
 
-// Certains navigateurs chargent les voix de façon asynchrone.
+// Les voix arrivent parfois après coup : on réévalue la voix française.
 if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = () => {
-    frenchVoice = null
-    pickFrenchVoice()
+    cachedFrenchVoice = null
+    voiceResolved = false
+    void resolveFrenchVoice()
   }
 }
 

@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
 
@@ -75,8 +76,9 @@ function LessonNode({
 }
 
 export function Home() {
-  const { profile, toggleSound } = useProfile()
+  const { profile, toggleSound, reset } = useProfile()
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   const level = profile.level!
   const curriculum = getCurriculum(level)
   const levelMeta = LEVELS.find((l) => l.id === level)!
@@ -127,6 +129,21 @@ export function Home() {
           aria-label={profile.soundOn ? 'Couper le son' : 'Activer le son'}
         >
           {profile.soundOn ? '🔊' : '🔇'}
+        </button>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="audio-pill"
+          style={{
+            width: 48,
+            height: 48,
+            minWidth: 48,
+            fontSize: '1.2rem',
+            background: '#fff',
+            boxShadow: '0 5px 0 rgba(58,46,42,0.12)',
+          }}
+          aria-label="Réglages"
+        >
+          ⚙️
         </button>
       </div>
 
@@ -202,6 +219,74 @@ export function Home() {
           </div>
         ))
       )}
+
+      {/* Fenêtre Réglages / Profil */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(58,46,42,0.45)',
+              display: 'grid',
+              placeItems: 'center',
+              padding: 20,
+              zIndex: 50,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.85, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card stack"
+              style={{ width: '100%', maxWidth: 380, gap: 16 }}
+            >
+              <div className="center" style={{ fontSize: '3rem' }}>
+                {profile.avatar}
+              </div>
+              <h2 className="center" style={{ fontSize: '1.3rem' }}>
+                {profile.name}
+              </h2>
+              <p className="center muted" style={{ marginTop: -8, fontWeight: 700 }}>
+                Niveau {levelMeta.label} · ⭐ {profile.xp} points
+              </p>
+
+              <button className="btn" onClick={() => setMenuOpen(false)}>
+                Continuer à jouer
+              </button>
+
+              <button
+                className="btn btn--coral"
+                onClick={() => {
+                  // Pas de compte : « se déconnecter » = effacer le profil
+                  // local et revenir à l'écran de bienvenue.
+                  if (
+                    window.confirm(
+                      'Changer de héros ? La progression de ' +
+                        profile.name +
+                        ' sera effacée sur cet appareil.',
+                    )
+                  ) {
+                    reset()
+                    navigate('/bienvenue', { replace: true })
+                  }
+                }}
+              >
+                👋 Changer de héros
+              </button>
+
+              <p className="center muted" style={{ fontSize: '0.75rem', margin: 0 }}>
+                Lumi fonctionne sans compte : la progression reste sur cet appareil.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

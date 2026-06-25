@@ -24,7 +24,7 @@ export const cp: Curriculum = {
           title: 'Les voyelles a, i, o',
           emoji: '🅰️',
           exercises: [
-            { type: 'flashcard', word: { fr: 'a', emoji: '🍎' }, hint: 'a comme dans « ananas »' },
+            { type: 'flashcard', word: { fr: 'a', emoji: '🍍' }, hint: 'a comme dans « ananas »' },
             { type: 'flashcard', word: { fr: 'i', emoji: '🏝️' }, hint: 'i comme dans « île »' },
             { type: 'flashcard', word: { fr: 'o', emoji: '🦴' }, hint: 'o comme dans « os »' },
             { type: 'listenWord', answer: 'ami', options: ['ami', 'oma'] },

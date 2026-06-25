@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mascot } from '../components/Mascot'
 import { useProfile } from '../state/ProfileContext'
 import { LEVELS, type LevelId } from '../data/curriculum'
-import { speak } from '../services/audio'
+import { useGreeting } from '../hooks/useGreeting'
 
 const AVATARS = ['🦊', '🐼', '🐯', '🐰', '🐨', '🦁', '🐸', '🦄', '🐙']
 
@@ -16,9 +16,8 @@ export function Onboarding() {
   const [avatar, setAvatar] = useState('🦊')
   const [level, setLevel] = useState<LevelId | null>(null)
 
-  useEffect(() => {
-    if (step === 0) speak('Bonjour ! Moi, c’est Lumi. Et toi, comment tu t’appelles ?')
-  }, [step])
+  // Lumi se présente dès le premier contact de l'enfant avec l'écran.
+  useGreeting('Bonjour ! Moi, c’est Lumi. Et toi, comment tu t’appelles ?')
 
   function finish(lvl: LevelId) {
     createProfile({ name: name.trim() || 'Champion', avatar, level: lvl })

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { PickImageExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 2 — COMPRÉHENSION ORALE.
@@ -35,7 +36,10 @@ export function PickImage({
 
   return (
     <div className="stack" style={{ gap: 18, flex: 1 }}>
-      <div className="row" style={{ justifyContent: 'center', gap: 14, marginTop: 8 }}>
+      <div
+        className="row"
+        style={{ justifyContent: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}
+      >
         <button
           className="audio-pill"
           onClick={() => speak(exercise.prompt.fr)}
@@ -43,7 +47,8 @@ export function PickImage({
         >
           🔊
         </button>
-        <p style={{ fontWeight: 800, fontSize: '1.1rem' }}>Touche : écoute&nbsp;!</p>
+        <p style={{ fontWeight: 800, fontSize: '1.05rem' }}>Écoute&nbsp;!</p>
+        <SpeedControl preview={exercise.prompt.fr} />
       </div>
 
       <div

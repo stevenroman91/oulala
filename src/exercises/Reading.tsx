@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ReadingExercise } from '../data/curriculum'
 import { playCorrect, playWrong, speak } from '../services/audio'
+import { SpeedControl } from '../components/SpeedControl'
 import { shuffle, type ExerciseProps } from './shared'
 
 /* Méthode 8 — LECTURE & COMPRÉHENSION.
@@ -62,24 +63,29 @@ export function Reading({
         >
           {exercise.text}
         </div>
-        <button
-          onClick={() => {
-            setReveal(true)
-            speak(exercise.text)
-          }}
+        <div
           className="row"
-          style={{
-            margin: '14px auto 0',
-            gap: 10,
-            background: 'var(--cream)',
-            borderRadius: 999,
-            padding: '10px 18px',
-            fontWeight: 800,
-          }}
+          style={{ justifyContent: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}
         >
-          <span style={{ fontSize: '1.2rem' }}>🔊</span>
-          {reveal ? 'Réécouter' : 'Écouter la phrase'}
-        </button>
+          <button
+            onClick={() => {
+              setReveal(true)
+              speak(exercise.text)
+            }}
+            className="row"
+            style={{
+              gap: 10,
+              background: 'var(--cream)',
+              borderRadius: 999,
+              padding: '10px 18px',
+              fontWeight: 800,
+            }}
+          >
+            <span style={{ fontSize: '1.2rem' }}>🔊</span>
+            {reveal ? 'Réécouter' : 'Écouter la phrase'}
+          </button>
+          <SpeedControl preview={exercise.text} />
+        </div>
       </motion.div>
 
       {/* La question */}

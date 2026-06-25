@@ -22,6 +22,19 @@
 let defaultRate = 1
 let muted = false
 
+// Quelques mots courts isolés sont mal prononcés par les TTS (homographes de
+// l'anglais comme « chat », ou consonne finale muette comme « loup »). On les
+// fait dire avec leur article, forme confirmée comme correcte, sans changer
+// ce qui est affiché à l'écran. (Aussi appliqué côté serveur, voir server.js.)
+const PRONUNCIATION: Record<string, string> = {
+  chat: 'le chat',
+  loup: 'le loup',
+  rat: 'le rat',
+}
+function withPronunciation(text: string): string {
+  return PRONUNCIATION[text.trim().toLowerCase()] ?? text
+}
+
 /** Vitesse de lecture par défaut (0.6 = lent, 1.1 = rapide). */
 export function setSpeechRate(rate: number) {
   defaultRate = rate
@@ -209,6 +222,7 @@ export async function speak(
 ): Promise<void> {
   stopCurrent()
   if (muted || !text) return
+  text = withPronunciation(text)
 
   const rate = opts.rate ?? defaultRate
   const premium = await serverSupportsTts()

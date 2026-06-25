@@ -19,20 +19,31 @@ principes adaptés au **jeune apprenant** :
 | --- | --- |
 | **Temps d'attention court** | Leçons de **3–5 min** (4–7 micro-exercices), pas de murs de texte. |
 | **Audio d'abord** | Tout se prononce : un enfant peut **réécouter** chaque mot à volonté. |
-| **Multi-méthodes** | 6 types d'exercices pour varier les stimuli et éviter la lassitude. |
+| **Multi-méthodes** | 8 types d'exercices pour varier les stimuli et éviter la lassitude. |
 | **Feedback positif** | Erreurs non punitives (son doux, on réessaie), encouragements constants. |
 | **Gamification douce** | Étoiles, points (XP), **série de jours** 🔥, carte d'îles à débloquer. |
 | **Mascotte affective** | **Lumi** rassure, guide et félicite — un compagnon, pas un prof. |
 | **Grandes cibles tactiles** | Boutons ≥ 64 px, formes très arrondies, fort contraste, pensé mobile. |
 
-### Les 6 méthodes d'apprentissage (= types d'exercices)
+### Les 8 méthodes d'apprentissage (= types d'exercices)
 
 1. **Flashcard** — découverte multisensorielle (voir + lire + entendre + répéter).
 2. **J'écoute, je choisis l'image** — compréhension orale (son → sens).
 3. **Quel mot entends-tu ?** — discrimination des sons & lecture (chat / rat…).
 4. **Remets la phrase dans l'ordre** — syntaxe et structure de la phrase.
 5. **Associe mot & image** — mémoire et lien graphie ↔ image.
-6. **Complète le mot** — orthographe, sans clavier (adapté aux plus jeunes).
+6. **Complète le mot** — orthographe / dictée, sans clavier (adapté aux plus jeunes).
+7. **Conjugaison** — choisir la bonne forme du verbe (CE1 : être, avoir, verbes -er).
+8. **Lecture & compréhension** — lire une phrase, puis répondre à une question illustrée.
+
+### Couverture du contenu
+
+- **CP** — très complet : les sons (voyelles, *ou*, *ch*, *on*), animaux (ferme,
+  sauvages), couleurs, nombres jusqu'à 10, famille, corps, aliments, premières
+  phrases (lecture) et dictée. **~9 îles.**
+- **CE1** — très complet : famille, actions, **conjugaison** (verbes -er, *être*,
+  *avoir*), école, nature, lecture d'histoires et dictée. **~7 îles.**
+- **CE2 → CM2** — gabarits prêts à remplir dans `src/data/`.
 
 ### « Parle avec Lumi » 🎙️ (expression orale)
 
@@ -60,7 +71,8 @@ Architecture :
 
 ```
 src/
-  data/curriculum.ts      # modèle + contenu CP & CE1 (îles → leçons → exercices)
+  data/curriculum.ts      # types + registre des niveaux
+  data/cp.ts, data/ce1.ts # contenu (îles → leçons → exercices) par niveau
   state/ProfileContext.tsx# profil, XP, étoiles, série (localStorage)
   services/audio.ts       # TTS (ElevenLabs / navigateur) + sons de feedback
   components/Mascot.tsx    # Lumi et ses humeurs

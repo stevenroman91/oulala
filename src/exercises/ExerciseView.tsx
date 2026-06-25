@@ -5,6 +5,8 @@ import { ListenWord } from './ListenWord'
 import { BuildSentence } from './BuildSentence'
 import { MatchPairs } from './MatchPairs'
 import { Spell } from './Spell'
+import { Conjugate } from './Conjugate'
+import { Reading } from './Reading'
 import type { ExerciseProps } from './shared'
 
 /** Aiguille chaque exercice vers le bon composant de jeu. */
@@ -25,5 +27,9 @@ export function ExerciseView({
       return <MatchPairs exercise={exercise} {...props} />
     case 'spell':
       return <Spell exercise={exercise} {...props} />
+    case 'conjugate':
+      return <Conjugate exercise={exercise} {...props} />
+    case 'reading':
+      return <Reading exercise={exercise} {...props} />
   }
 }

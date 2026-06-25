@@ -18,7 +18,8 @@
    ============================================================ */
 
 // Réglages globaux pilotés par le profil (voir ProfileContext).
-let defaultRate = 0.9
+// 1 = vitesse normale (multiplicateur appliqué premium + navigateur).
+let defaultRate = 1
 let muted = false
 
 /** Vitesse de lecture par défaut (0.6 = lent, 1.1 = rapide). */
@@ -56,24 +57,51 @@ function stopCurrent() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 }
 
-/** Tente la voix premium via le proxy serveur. Renvoie false si indispo. */
-async function playWithServer(text: string): Promise<boolean> {
-  if (!(await serverSupportsTts())) return false
-  try {
-    let url = cache.get(text)
-    if (!url) {
+// On SÉRIALISE les appels réseau au proxy : ElevenLabs limite le nombre de
+// requêtes simultanées, et plusieurs lectures rapprochées (mot au montage +
+// aperçu de vitesse + réécoute) pouvaient en faire échouer certaines, d'où
+// des basculements aléatoires sur la voix du navigateur.
+let ttsQueue: Promise<unknown> = Promise.resolve()
+
+function fetchTtsUrl(text: string): Promise<string | null> {
+  const run = async (): Promise<string | null> => {
+    const cached = cache.get(text)
+    if (cached) return cached
+    try {
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
       const type = res.headers.get('content-type') || ''
-      if (!res.ok || !type.includes('audio')) return false
+      if (!res.ok || !type.includes('audio')) return null
       const blob = await res.blob()
-      url = URL.createObjectURL(blob)
+      const url = URL.createObjectURL(blob)
       cache.set(text, url)
+      return url
+    } catch {
+      return null
     }
+  }
+  const p = ttsQueue.then(run, run)
+  ttsQueue = p.then(
+    () => undefined,
+    () => undefined,
+  )
+  return p
+}
+
+/** Tente la voix premium via le proxy serveur. Renvoie false si indispo. */
+async function playWithServer(text: string, rate: number): Promise<boolean> {
+  if (!(await serverSupportsTts())) return false
+  const url = await fetchTtsUrl(text)
+  if (!url) return false
+  try {
     const audio = new Audio(url)
+    // Applique la vitesse à la voix premium en préservant la hauteur de voix.
+    audio.preservesPitch = true
+    ;(audio as unknown as { webkitPreservesPitch?: boolean }).webkitPreservesPitch = true
+    audio.playbackRate = Math.min(2, Math.max(0.5, rate))
     currentAudio = audio
     await new Promise<void>((resolve) => {
       audio.onended = () => resolve()
@@ -168,15 +196,33 @@ async function speakWithBrowser(text: string, rate: number): Promise<void> {
  * Prononce un mot ou une phrase en français.
  * @returns une Promise résolue à la fin de la lecture.
  */
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
 export async function speak(
   text: string,
   opts: { rate?: number } = {},
 ): Promise<void> {
   stopCurrent()
   if (muted || !text) return
-  const ok = await playWithServer(text)
-  if (ok) return
-  await speakWithBrowser(text, opts.rate ?? defaultRate)
+
+  const rate = opts.rate ?? defaultRate
+  const premium = await serverSupportsTts()
+  if (premium) {
+    // Voix premium configurée : on tente, puis on RÉESSAIE une fois (les
+    // échecs sont souvent transitoires : limite de débit/concurrence côté
+    // ElevenLabs). On ne bascule JAMAIS sur la voix anglaise du navigateur.
+    if (await playWithServer(text, rate)) return
+    await delay(300)
+    if (await playWithServer(text, rate)) return
+    // Dernier recours : voix du navigateur UNIQUEMENT si elle est française,
+    // sinon on se tait (mieux vaut le silence qu'une prononciation anglaise).
+    const frVoice = await resolveFrenchVoice()
+    if (frVoice) await speakWithBrowser(text, rate)
+    return
+  }
+
+  // Pas de voix premium : on utilise la voix du navigateur (fr si dispo).
+  await speakWithBrowser(text, rate)
 }
 
 // Les voix arrivent parfois après coup : on réévalue la voix française.

@@ -88,6 +88,17 @@ async function ttsSynthesize(text) {
 const TTS_TEST_TEXT =
   'Bonjour ! Moi, c’est Lumi. On va apprendre le français en s’amusant !'
 
+// Mots courts mal prononcés isolément (homographes anglais, finale muette) :
+// on les fait dire avec leur article. Doit rester aligné avec le client.
+const PRONUNCIATION = {
+  chat: 'le chat',
+  loup: 'le loup',
+  rat: 'le rat',
+}
+function withPronunciation(text) {
+  return PRONUNCIATION[String(text).trim().toLowerCase()] || text
+}
+
 async function handleTts(req, res, fixedText) {
   if (!EL_KEY || !EL_VOICE) {
     res.writeHead(503, { 'Content-Type': 'application/json' })
@@ -106,7 +117,7 @@ async function handleTts(req, res, fixedText) {
       return
     }
 
-    const result = await ttsSynthesize(text)
+    const result = await ttsSynthesize(withPronunciation(text))
     if (!result.ok) {
       // On renvoie le DÉTAIL réel d'ElevenLabs, lisible dans le navigateur,
       // pour diagnostiquer (voice_id introuvable, crédits, clé invalide…).

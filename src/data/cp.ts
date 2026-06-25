@@ -61,7 +61,7 @@ export const cp: Curriculum = {
           exercises: [
             { type: 'flashcard', word: { fr: 'le chat', emoji: '🐱' } },
             { type: 'flashcard', word: { fr: 'le château', emoji: '🏰' } },
-            { type: 'flashcard', word: { fr: 'la niche', emoji: '🐕' } },
+            { type: 'flashcard', word: { fr: 'le chocolat', emoji: '🍫' } },
             { type: 'listenWord', answer: 'chat', options: ['chat', 'rat'] },
             { type: 'listenWord', answer: 'vache', options: ['vache', 'bague'] },
             { type: 'spell', word: { fr: 'chat', emoji: '🐱' }, missing: [0, 1] },

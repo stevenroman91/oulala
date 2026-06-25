@@ -104,11 +104,13 @@ export function Reading({
             className="card center stack"
             style={{
               gap: 6,
-              padding: 14,
+              padding: '18px 12px',
+              minHeight: 120,
+              justifyContent: 'center',
               outline: wrong === opt.fr ? '4px solid var(--soft-red)' : 'none',
             }}
           >
-            <span style={{ fontSize: '2.6rem' }}>{opt.emoji}</span>
+            <span style={{ fontSize: '3.6rem', lineHeight: 1 }}>{opt.emoji}</span>
             <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>{opt.fr}</span>
           </motion.button>
         ))}

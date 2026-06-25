@@ -51,11 +51,11 @@ export function MatchPairs({
   return (
     <div className="stack" style={{ gap: 16, flex: 1 }}>
       <p style={{ fontWeight: 800, marginTop: 6 }}>
-        🧩 Associe le mot à la bonne image
+        🧩 Touche un mot, puis son image
       </p>
-      <div className="row" style={{ alignItems: 'flex-start', gap: 12, flex: 1 }}>
+      <div className="row" style={{ alignItems: 'stretch', gap: 12, flex: 1 }}>
         {/* Colonne des mots */}
-        <div className="stack" style={{ flex: 1 }}>
+        <div className="stack" style={{ flex: 1, justifyContent: 'center' }}>
           {words.map((p) => {
             const done = matched.includes(p.fr)
             const active = selectedWord === p.fr
@@ -67,31 +67,42 @@ export function MatchPairs({
                 className="card center"
                 style={{
                   fontWeight: 800,
-                  padding: 14,
-                  opacity: done ? 0.4 : 1,
-                  outline: active ? '4px solid var(--teal)' : 'none',
+                  fontSize: '1.15rem',
+                  padding: '18px 12px',
+                  minHeight: 70,
+                  background: active ? 'var(--teal)' : '#fff',
+                  color: active ? '#fff' : 'var(--ink)',
+                  opacity: done ? 0.35 : 1,
                 }}
               >
-                {p.fr}
+                {done ? '✅' : p.fr}
               </motion.button>
             )
           })}
         </div>
-        {/* Colonne des images */}
-        <div className="stack" style={{ flex: 1 }}>
+        {/* Colonne des images — grandes vignettes faciles à reconnaître */}
+        <div className="stack" style={{ flex: 1, justifyContent: 'center' }}>
           {images.map((p) => {
             const done = matched.includes(p.fr)
             return (
               <motion.button
                 key={p.fr}
-                animate={wrongPair === p.fr ? { x: [0, -8, 8, 0] } : {}}
+                animate={
+                  wrongPair === p.fr
+                    ? { x: [0, -8, 8, 0] }
+                    : done
+                      ? { scale: [1, 1.12, 1] }
+                      : {}
+                }
                 whileTap={{ scale: 0.96 }}
                 onClick={() => tapImage(p.fr)}
                 className="card center"
                 style={{
-                  fontSize: '2.4rem',
-                  padding: 12,
-                  opacity: done ? 0.4 : 1,
+                  fontSize: '3.8rem',
+                  padding: 8,
+                  minHeight: 90,
+                  lineHeight: 1,
+                  opacity: done ? 0.85 : 1,
                   outline: wrongPair === p.fr ? '4px solid var(--soft-red)' : 'none',
                 }}
               >

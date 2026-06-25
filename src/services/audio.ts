@@ -5,21 +5,48 @@
    d'ENTENDRE le mot juste, prononcé clairement, autant de fois
    qu'il veut. L'audio est donc central, pas accessoire.
 
-   Deux fournisseurs :
-   1. ElevenLabs (voix premium) si une clé est configurée.
+   Trois fournisseurs de voix, dans l'ordre de préférence :
+   1. Proxy serveur « /api/tts » → voix premium ElevenLabs, avec
+      la MÊME voix que l'agent conversationnel (clé API gardée
+      SECRÈTE côté serveur, jamais exposée au navigateur).
    2. Web Speech API du navigateur (gratuit, hors-ligne) sinon.
 
-   L'app reste 100% jouable sans aucune clé.
+   `speak()` renvoie une Promise résolue À LA FIN de la lecture :
+   on peut donc attendre que la voix finisse avant d'enchaîner.
+
+   L'app reste 100% jouable sans aucune configuration.
    ============================================================ */
 
-const EL_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined
-const EL_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string | undefined
+// Réglages globaux pilotés par le profil (voir ProfileContext).
+let defaultRate = 0.9
+let muted = false
 
-export const hasPremiumVoice = Boolean(EL_API_KEY && EL_VOICE_ID)
+/** Vitesse de lecture par défaut (0.6 = lent, 1.1 = rapide). */
+export function setSpeechRate(rate: number) {
+  defaultRate = rate
+}
 
-// Petit cache pour ne pas re-télécharger un mot déjà prononcé.
+/** Coupe/active toute la voix d'un coup. */
+export function setMuted(value: boolean) {
+  muted = value
+}
+
+// Cache des audios déjà synthétisés (clé = texte + voix).
 const cache = new Map<string, string>()
 let currentAudio: HTMLAudioElement | null = null
+
+// Sonde unique des capacités du serveur via /api/config (renvoie 200,
+// donc aucune erreur réseau en console quand le TTS n'est pas configuré).
+let capabilityProbe: Promise<boolean> | null = null
+function serverSupportsTts(): Promise<boolean> {
+  if (!capabilityProbe) {
+    capabilityProbe = fetch('/api/config')
+      .then((r) => (r.ok ? r.json() : { tts: false }))
+      .then((c) => Boolean(c && c.tts))
+      .catch(() => false)
+  }
+  return capabilityProbe
+}
 
 function stopCurrent() {
   if (currentAudio) {
@@ -29,34 +56,30 @@ function stopCurrent() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 }
 
-async function speakWithElevenLabs(text: string): Promise<boolean> {
+/** Tente la voix premium via le proxy serveur. Renvoie false si indispo. */
+async function playWithServer(text: string): Promise<boolean> {
+  if (!(await serverSupportsTts())) return false
   try {
     let url = cache.get(text)
     if (!url) {
-      const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE_ID}`,
-        {
-          method: 'POST',
-          headers: {
-            'xi-api-key': EL_API_KEY as string,
-            'Content-Type': 'application/json',
-            Accept: 'audio/mpeg',
-          },
-          body: JSON.stringify({
-            text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-          }),
-        },
-      )
-      if (!res.ok) return false
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const type = res.headers.get('content-type') || ''
+      if (!res.ok || !type.includes('audio')) return false
       const blob = await res.blob()
       url = URL.createObjectURL(blob)
       cache.set(text, url)
     }
     const audio = new Audio(url)
     currentAudio = audio
-    await audio.play()
+    await new Promise<void>((resolve) => {
+      audio.onended = () => resolve()
+      audio.onerror = () => resolve()
+      audio.play().catch(() => resolve())
+    })
     return true
   } catch {
     return false
@@ -75,26 +98,45 @@ function pickFrenchVoice(): SpeechSynthesisVoice | null {
   return frenchVoice
 }
 
-function speakWithBrowser(text: string, rate = 0.9) {
-  if (!('speechSynthesis' in window)) return
-  const utter = new SpeechSynthesisUtterance(text)
-  utter.lang = 'fr-FR'
-  // Un débit légèrement ralenti aide l'apprenant débutant.
-  utter.rate = rate
-  utter.pitch = 1.05
-  const voice = pickFrenchVoice()
-  if (voice) utter.voice = voice
-  window.speechSynthesis.speak(utter)
+/** Voix du navigateur. Résout quand la lecture est terminée. */
+function speakWithBrowser(text: string, rate: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window)) return resolve()
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      resolve()
+    }
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'fr-FR'
+    utter.rate = rate
+    utter.pitch = 1.05
+    const voice = pickFrenchVoice()
+    if (voice) utter.voice = voice
+    utter.onend = finish
+    utter.onerror = finish
+    // Garde-fou : si onend ne se déclenche jamais (certains navigateurs /
+    // environnements sans TTS réelle), on libère après une durée estimée.
+    const estimateMs = Math.min(9000, 700 + (text.length / Math.max(rate, 0.5)) * 90)
+    setTimeout(finish, estimateMs)
+    window.speechSynthesis.speak(utter)
+  })
 }
 
-/** Prononce un mot ou une phrase en français. */
-export async function speak(text: string, opts: { rate?: number } = {}) {
+/**
+ * Prononce un mot ou une phrase en français.
+ * @returns une Promise résolue à la fin de la lecture.
+ */
+export async function speak(
+  text: string,
+  opts: { rate?: number } = {},
+): Promise<void> {
   stopCurrent()
-  if (hasPremiumVoice) {
-    const ok = await speakWithElevenLabs(text)
-    if (ok) return
-  }
-  speakWithBrowser(text, opts.rate)
+  if (muted || !text) return
+  const ok = await playWithServer(text)
+  if (ok) return
+  await speakWithBrowser(text, opts.rate ?? defaultRate)
 }
 
 // Certains navigateurs chargent les voix de façon asynchrone.
@@ -118,7 +160,7 @@ function ctx(): AudioContext | null {
 
 function tone(freq: number, start: number, dur: number, gain = 0.15) {
   const c = ctx()
-  if (!c) return
+  if (!c || muted) return
   const osc = c.createOscillator()
   const g = c.createGain()
   osc.type = 'sine'

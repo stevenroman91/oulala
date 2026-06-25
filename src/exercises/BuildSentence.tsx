@@ -31,11 +31,11 @@ export function BuildSentence({
   const available = bank.filter((b) => !picked.some((p) => p.key === b.key))
   const isFull = picked.length === target.length
 
-  function check() {
+  async function check() {
     const made = picked.map((p) => p.w).join(' ')
     if (made === exercise.sentence) {
       playCorrect()
-      speak(exercise.sentence)
+      await speak(exercise.sentence) // on laisse la phrase se terminer
       onDone(!missed)
     } else {
       playWrong()

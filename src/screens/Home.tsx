@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useProfile } from '../state/ProfileContext'
+import { SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
+import { speak } from '../services/audio'
 
 function Stat({ icon, value, label }: { icon: string; value: string | number; label: string }) {
   return (
@@ -76,7 +77,7 @@ function LessonNode({
 }
 
 export function Home() {
-  const { profile, toggleSound, reset } = useProfile()
+  const { profile, toggleSound, setRate, setLevel, reset } = useProfile()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const level = profile.level!
@@ -255,6 +256,70 @@ export function Home() {
               <p className="center muted" style={{ marginTop: -8, fontWeight: 700 }}>
                 Niveau {levelMeta.label} · ⭐ {profile.xp} points
               </p>
+
+              {/* Changer de niveau (si on s'est trompé) */}
+              <div className="stack" style={{ gap: 8 }}>
+                <span style={{ fontWeight: 800 }}>🎓 Mon niveau</span>
+                <div className="row" style={{ gap: 8 }}>
+                  {LEVELS.map((l) => {
+                    const ready = l.id === 'cp' || l.id === 'ce1'
+                    const active = profile.level === l.id
+                    return (
+                      <button
+                        key={l.id}
+                        onClick={() => ready && setLevel(l.id)}
+                        className="card center"
+                        style={{
+                          flex: 1,
+                          padding: '12px 4px',
+                          fontWeight: 900,
+                          background: active ? l.color : '#fff',
+                          color: active ? '#fff' : ready ? 'var(--ink)' : 'var(--ink-soft)',
+                          opacity: ready ? 1 : 0.45,
+                          outline: active ? '4px solid var(--ink)' : '4px solid transparent',
+                        }}
+                      >
+                        {l.label}
+                        {!ready && (
+                          <span style={{ display: 'block', fontSize: '0.6rem' }}>🔒</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Vitesse de la voix */}
+              <div className="stack" style={{ gap: 8 }}>
+                <span style={{ fontWeight: 800 }}>🔊 Vitesse de la voix</span>
+                <div className="row" style={{ gap: 8 }}>
+                  {SPEECH_RATES.map((r) => {
+                    const active = Math.abs(profile.rate - r.value) < 0.01
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          setRate(r.value)
+                          // aperçu immédiat à la nouvelle vitesse
+                          speak('Bonjour, je suis Lumi.', { rate: r.value })
+                        }}
+                        className="card center stack"
+                        style={{
+                          flex: 1,
+                          gap: 2,
+                          padding: '12px 6px',
+                          outline: active ? '4px solid var(--teal)' : '4px solid transparent',
+                        }}
+                      >
+                        <span style={{ fontSize: '1.6rem' }}>{r.icon}</span>
+                        <span style={{ fontWeight: 800, fontSize: '0.85rem' }}>
+                          {r.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
               <button className="btn" onClick={() => setMenuOpen(false)}>
                 Continuer à jouer

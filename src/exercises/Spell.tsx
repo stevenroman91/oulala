@@ -40,7 +40,7 @@ export function Spell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise])
 
-  function pick(letter: string) {
+  async function pick(letter: string) {
     if (nextIndex === undefined) return
     const expected = letters[nextIndex].toLowerCase()
     if (letter === expected) {
@@ -49,8 +49,8 @@ export function Spell({
       const complete = exercise.missing.every((i) => i in filledNext)
       if (complete) {
         playCorrect()
-        speak(exercise.word.fr)
-        setTimeout(() => onDone(!missed), 300)
+        await speak(exercise.word.fr) // on laisse le mot se prononcer en entier
+        onDone(!missed)
       } else {
         playCorrect()
       }

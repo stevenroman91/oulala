@@ -42,9 +42,14 @@ let capabilityProbe: Promise<boolean> | null = null
 function serverSupportsTts(): Promise<boolean> {
   if (!capabilityProbe) {
     capabilityProbe = fetch('/api/config')
-      .then((r) => (r.ok ? r.json() : { tts: false }))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('config'))))
       .then((c) => Boolean(c && c.tts))
-      .catch(() => false)
+      .catch(() => {
+        // Échec transitoire : on NE mémorise PAS « pas de premium » (sinon
+        // toute la session resterait en voix navigateur). On re-sondera.
+        capabilityProbe = null
+        return false
+      })
   }
   return capabilityProbe
 }

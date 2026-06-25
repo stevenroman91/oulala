@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Mascot } from '../components/Mascot'
 import { useProfile } from '../state/ProfileContext'
 import { LEVELS, type LevelId } from '../data/curriculum'
-import { useGreeting } from '../hooks/useGreeting'
+import { LUMI_INTRO, useGreeting } from '../hooks/useGreeting'
 
 const AVATARS = ['🦊', '🐼', '🐯', '🐰', '🐨', '🦁', '🐸', '🦄', '🐙']
 
@@ -17,7 +17,7 @@ export function Onboarding() {
   const [level, setLevel] = useState<LevelId | null>(null)
 
   // Lumi se présente dès le premier contact de l'enfant avec l'écran.
-  useGreeting('Bonjour ! Moi, c’est Lumi. Et toi, comment tu t’appelles ?')
+  useGreeting(LUMI_INTRO)
 
   function finish(lvl: LevelId) {
     createProfile({ name: name.trim() || 'Champion', avatar, level: lvl })

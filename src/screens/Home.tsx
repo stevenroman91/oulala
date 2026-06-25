@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { SPEECH_RATES, useProfile } from '../state/ProfileContext'
+import { closestRate, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
 import { speak } from '../services/audio'
 import { useGreeting } from '../hooks/useGreeting'
@@ -298,7 +298,7 @@ export function Home() {
                 <span style={{ fontWeight: 800 }}>🔊 Vitesse de la voix</span>
                 <div className="row" style={{ gap: 8 }}>
                   {SPEECH_RATES.map((r) => {
-                    const active = Math.abs(profile.rate - r.value) < 0.01
+                    const active = closestRate(profile.rate).id === r.id
                     return (
                       <button
                         key={r.id}

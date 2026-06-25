@@ -1,4 +1,4 @@
-import { SPEECH_RATES, useProfile } from '../state/ProfileContext'
+import { closestRate, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { speak } from '../services/audio'
 
 /* ============================================================
@@ -23,7 +23,7 @@ export function SpeedControl({ preview }: { preview?: string }) {
       }}
     >
       {SPEECH_RATES.map((r) => {
-        const active = Math.abs(profile.rate - r.value) < 0.01
+        const active = closestRate(profile.rate).id === r.id
         return (
           <button
             key={r.id}

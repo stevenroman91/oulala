@@ -34,12 +34,21 @@ export interface Profile {
   rate: number // vitesse de lecture de la voix (0.6 lent → 1.1 rapide)
 }
 
-/** Vitesses proposées à l'enfant. */
+/** Vitesses proposées à l'enfant (multiplicateur : 1 = normal). S'applique
+ *  à la voix premium (playbackRate) comme à la voix du navigateur. */
 export const SPEECH_RATES = [
-  { id: 'slow', label: 'Lent', icon: '🐢', value: 0.65 },
-  { id: 'normal', label: 'Normal', icon: '🙂', value: 0.9 },
-  { id: 'fast', label: 'Rapide', icon: '🐇', value: 1.1 },
+  { id: 'slow', label: 'Lent', icon: '🐢', value: 0.7 },
+  { id: 'normal', label: 'Normal', icon: '🙂', value: 1 },
+  { id: 'fast', label: 'Rapide', icon: '🐇', value: 1.3 },
 ] as const
+
+/** Renvoie la vitesse proposée la plus proche d'une valeur (robuste aux
+ *  anciens profils enregistrés avec d'autres valeurs). */
+export function closestRate(value: number) {
+  return SPEECH_RATES.reduce((a, b) =>
+    Math.abs(b.value - value) < Math.abs(a.value - value) ? b : a,
+  )
+}
 
 const DEFAULT_PROFILE: Profile = {
   name: '',
@@ -50,7 +59,7 @@ const DEFAULT_PROFILE: Profile = {
   streak: 0,
   lastActiveDate: null,
   soundOn: true,
-  rate: 0.9,
+  rate: 1,
 }
 
 const STORAGE_KEY = 'lumi.profile.v1'

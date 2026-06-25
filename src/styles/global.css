@@ -1,0 +1,231 @@
+/* ============================================================
+   Lumi — Design system pour jeunes enfants (CP–CM2)
+   Principes : grandes cibles tactiles (min 64px), contrastes
+   forts, formes très arrondies, couleurs chaleureuses, peu de
+   texte, beaucoup de feedback visuel.
+   ============================================================ */
+
+:root {
+  /* Palette chaleureuse et rassurante */
+  --cream: #fff4e0;
+  --cream-deep: #ffe9c7;
+  --ink: #3a2e2a;
+  --ink-soft: #7a6a62;
+
+  --coral: #ff6b6b;
+  --coral-deep: #e85555;
+  --teal: #1fc4ac;
+  --teal-deep: #14a892;
+  --sun: #ffc93c;
+  --sun-deep: #f5b400;
+  --grape: #9b6bff;
+  --sky: #4dabf7;
+
+  --good: #2fbf71;
+  --good-deep: #1f9e58;
+  --soft-red: #ff8787;
+
+  --white: #ffffff;
+  --shadow: 0 8px 0 rgba(58, 46, 42, 0.12);
+  --shadow-press: 0 3px 0 rgba(58, 46, 42, 0.12);
+
+  --radius: 26px;
+  --radius-lg: 38px;
+
+  --font: 'Baloo 2', 'Quicksand', 'Trebuchet MS', system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--cream);
+  background-image: radial-gradient(
+      circle at 12% 18%,
+      rgba(255, 201, 60, 0.25),
+      transparent 38%
+    ),
+    radial-gradient(circle at 88% 12%, rgba(31, 196, 172, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(155, 107, 255, 0.16), transparent 42%);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  user-select: none;
+}
+
+#root {
+  display: flex;
+  justify-content: center;
+}
+
+/* Conteneur "téléphone" centré, lisible sur grand écran comme sur mobile */
+.app-shell {
+  width: 100%;
+  max-width: 540px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0 18px env(safe-area-inset-bottom, 18px);
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ---------- Boutons ---------- */
+.btn {
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--white);
+  background: var(--teal);
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  min-height: 64px;
+  width: 100%;
+  box-shadow: 0 6px 0 var(--teal-deep);
+  transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--teal-deep);
+}
+.btn:disabled {
+  filter: grayscale(0.4) opacity(0.6);
+  pointer-events: none;
+}
+.btn--coral {
+  background: var(--coral);
+  box-shadow: 0 6px 0 var(--coral-deep);
+}
+.btn--coral:active {
+  box-shadow: 0 2px 0 var(--coral-deep);
+}
+.btn--sun {
+  background: var(--sun);
+  color: var(--ink);
+  box-shadow: 0 6px 0 var(--sun-deep);
+}
+.btn--sun:active {
+  box-shadow: 0 2px 0 var(--sun-deep);
+}
+.btn--ghost {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 6px 0 rgba(58, 46, 42, 0.12);
+}
+.btn--ghost:active {
+  box-shadow: 0 2px 0 rgba(58, 46, 42, 0.12);
+}
+
+/* ---------- Cartes ---------- */
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+/* ---------- Utilitaires ---------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.spacer {
+  flex: 1;
+}
+.center {
+  text-align: center;
+}
+.muted {
+  color: var(--ink-soft);
+}
+.fade-bottom {
+  flex: 1;
+}
+
+/* Pastille audio ronde */
+.audio-pill {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 50%;
+  background: var(--sun);
+  color: var(--ink);
+  font-size: 1.6rem;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 5px 0 var(--sun-deep);
+}
+.audio-pill:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--sun-deep);
+}
+
+/* Barre de progression d'une leçon */
+.progress-track {
+  height: 16px;
+  background: var(--cream-deep);
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 1;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--good));
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Pour le lecteur d'écran uniquement */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.05ms !important;
+  }
+}

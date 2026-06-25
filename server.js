@@ -52,51 +52,75 @@ function readBody(req) {
   })
 }
 
-async function handleTts(req, res) {
+// Appelle ElevenLabs et renvoie soit l'audio, soit le détail de l'erreur.
+async function ttsSynthesize(text) {
+  const upstream = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE}`,
+    {
+      method: 'POST',
+      headers: {
+        'xi-api-key': EL_KEY,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text,
+        model_id: EL_MODEL,
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      }),
+    },
+  )
+  if (!upstream.ok) {
+    const detail = await upstream.text().catch(() => '')
+    return { ok: false, status: upstream.status, detail }
+  }
+  return { ok: true, buf: Buffer.from(await upstream.arrayBuffer()) }
+}
+
+// Phrase par défaut pour le test audible (GET /api/tts).
+const TTS_TEST_TEXT =
+  'Bonjour ! Moi, c’est Lumi. On va apprendre le français en s’amusant !'
+
+async function handleTts(req, res, fixedText) {
   if (!EL_KEY || !EL_VOICE) {
     res.writeHead(503, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'TTS non configuré' }))
+    res.end(JSON.stringify({ error: 'TTS non configuré (clé ou voice id manquant)' }))
     return
   }
   try {
-    const body = JSON.parse((await readBody(req)) || '{}')
-    const text = String(body.text || '').slice(0, 400)
+    let text = fixedText
+    if (!text) {
+      const body = JSON.parse((await readBody(req)) || '{}')
+      text = String(body.text || '').slice(0, 400)
+    }
     if (!text) {
       res.writeHead(400, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ error: 'texte manquant' }))
       return
     }
-    const upstream = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': EL_KEY,
-          'Content-Type': 'application/json',
-          Accept: 'audio/mpeg',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: EL_MODEL,
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-        }),
-      },
-    )
-    if (!upstream.ok) {
-      res.writeHead(502, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ error: 'erreur ElevenLabs', status: upstream.status }))
+
+    const result = await ttsSynthesize(text)
+    if (!result.ok) {
+      // On renvoie le DÉTAIL réel d'ElevenLabs, lisible dans le navigateur,
+      // pour diagnostiquer (voice_id introuvable, crédits, clé invalide…).
+      res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end(
+        `❌ ElevenLabs a refusé la requête (HTTP ${result.status}).\n` +
+          `Voice ID utilisé : ${EL_VOICE}\n` +
+          `Modèle : ${EL_MODEL}\n\n` +
+          `Réponse d'ElevenLabs :\n${String(result.detail).slice(0, 1000)}`,
+      )
       return
     }
-    const buf = Buffer.from(await upstream.arrayBuffer())
     res.writeHead(200, {
       'Content-Type': 'audio/mpeg',
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': fixedText ? 'no-cache' : 'public, max-age=86400',
     })
-    res.end(buf)
+    res.end(result.buf)
   } catch (err) {
     console.error('TTS error', err)
     res.writeHead(500, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'erreur interne' }))
+    res.end(JSON.stringify({ error: 'erreur interne', detail: String(err) }))
   }
 }
 
@@ -113,7 +137,10 @@ const server = createServer(async (req, res) => {
 
     // API : synthèse vocale.
     if (path === '/api/tts') {
+      // POST : utilisé par l'app. GET : test audible à ouvrir dans le
+      // navigateur (joue une phrase de Lumi, ou affiche l'erreur ElevenLabs).
       if (req.method === 'POST') return handleTts(req, res)
+      if (req.method === 'GET') return handleTts(req, res, TTS_TEST_TEXT)
       res.writeHead(405).end()
       return
     }

@@ -60,9 +60,12 @@ function readBody(req) {
 }
 
 // Appelle ElevenLabs et renvoie soit l'audio, soit le détail de l'erreur.
-async function ttsSynthesize(text) {
+// voiceOverride : pour ESSAYER une autre voix (test A/B via /api/tts?voice=…),
+// sans rien redéployer. L'app, elle, utilise toujours EL_VOICE.
+async function ttsSynthesize(text, voiceOverride) {
+  const voice = voiceOverride || EL_VOICE
   const upstream = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${voice}`,
     {
       method: 'POST',
       headers: {
@@ -103,7 +106,7 @@ function withPronunciation(text) {
   return PRONUNCIATION[String(text).trim().toLowerCase()] || text
 }
 
-async function handleTts(req, res, fixedText) {
+async function handleTts(req, res, fixedText, voiceOverride) {
   if (!EL_KEY || !EL_VOICE) {
     res.writeHead(503, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ error: 'TTS non configuré (clé ou voice id manquant)' }))
@@ -121,14 +124,14 @@ async function handleTts(req, res, fixedText) {
       return
     }
 
-    const result = await ttsSynthesize(withPronunciation(text))
+    const result = await ttsSynthesize(withPronunciation(text), voiceOverride)
     if (!result.ok) {
       // On renvoie le DÉTAIL réel d'ElevenLabs, lisible dans le navigateur,
       // pour diagnostiquer (voice_id introuvable, crédits, clé invalide…).
       res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' })
       res.end(
         `❌ ElevenLabs a refusé la requête (HTTP ${result.status}).\n` +
-          `Voice ID utilisé : ${EL_VOICE}\n` +
+          `Voice ID utilisé : ${voiceOverride || EL_VOICE}\n` +
           `Modèle : ${EL_MODEL}\n\n` +
           `Réponse d'ElevenLabs :\n${String(result.detail).slice(0, 1000)}`,
       )
@@ -151,9 +154,19 @@ const server = createServer(async (req, res) => {
     const path = (req.url || '/').split('?')[0]
 
     // API : capacités du serveur (toujours 200, pour sonder sans erreur).
+    // On expose aussi le voice_id + modèle EMPLOYÉS PAR LE JEU (un voice_id
+    // n'est pas secret) pour pouvoir vérifier qu'ils correspondent bien à la
+    // voix française attendue. La clé API, elle, n'est jamais exposée.
     if (path === '/api/config') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' })
-      res.end(JSON.stringify({ tts: Boolean(EL_KEY && EL_VOICE) }))
+      res.end(
+        JSON.stringify({
+          tts: Boolean(EL_KEY && EL_VOICE),
+          voiceId: EL_VOICE || null,
+          model: EL_MODEL,
+          forceFr: EL_FORCE_FR,
+        }),
+      )
       return
     }
 
@@ -163,14 +176,18 @@ const server = createServer(async (req, res) => {
       // navigateur (joue une phrase de Lumi, ou affiche l'erreur ElevenLabs).
       if (req.method === 'POST') return handleTts(req, res)
       if (req.method === 'GET') {
-        // Test audible. ?text=poule pour tester un mot précis.
+        // Test audible. ?text=poule pour un mot précis ; ?voice=ID pour
+        // ESSAYER une autre voix instantanément (sans redéployer).
         let q = ''
+        let voice = ''
         try {
-          q = new URL(req.url, 'http://localhost').searchParams.get('text') || ''
+          const sp = new URL(req.url, 'http://localhost').searchParams
+          q = sp.get('text') || ''
+          voice = sp.get('voice') || ''
         } catch {
           q = ''
         }
-        return handleTts(req, res, q.slice(0, 400) || TTS_TEST_TEXT)
+        return handleTts(req, res, q.slice(0, 400) || TTS_TEST_TEXT, voice || undefined)
       }
       res.writeHead(405).end()
       return

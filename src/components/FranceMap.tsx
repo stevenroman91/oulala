@@ -16,9 +16,12 @@ export interface MapStop {
   done: boolean
 }
 
-// Silhouette simplifiée de la France métropolitaine (viewBox 0..100).
+// Silhouette simplifiée mais reconnaissable de la France métropolitaine
+// (l'Hexagone) — viewBox 0..100. Tracé dans le sens horaire depuis le nord :
+// frontière est (Alsace), pointe des Alpes au SE, côte méditerranéenne,
+// Pyrénées au sud, côte atlantique, pointe de la Bretagne à l'ouest, Cotentin.
 const FRANCE_OUTLINE =
-  '50,3 60,6 70,10 76,15 79,24 86,33 90,45 88,55 82,63 80,72 73,82 63,88 52,90 41,88 31,84 25,74 23,63 14,57 7,50 13,43 19,39 21,29 29,21 38,13 45,7'
+  '57,2 62,5 75,13 84,16 95,26 95,36 92,40 91,47 92,54 92,63 94,75 80,80 69,79 62,84 62,86 50,87 42,86 27,79 29,66 29,56 29,50 25,47 22,39 15,37 3,32 6,26 23,26 26,21 26,14 29,18 39,16 47,12 53,3'
 
 export function FranceMap({
   stops,

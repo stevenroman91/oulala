@@ -96,14 +96,24 @@ const TTS_TEST_TEXT =
 // Mots courts mal prononcés isolément (homographes anglais, finale muette) :
 // on les fait dire avec leur article. Doit rester aligné avec le client.
 const PRONUNCIATION = {
+  // Doit rester aligné avec src/services/audio.ts.
   chat: 'le chat',
-  loup: 'le loup',
   rat: 'le rat',
+  loup: 'le loup',
+  lit: 'le lit',
   pont: 'le pont',
   pain: 'le pain',
   pin: 'le pin',
-  lit: 'le lit',
   bain: 'le bain',
+  gant: 'le gant',
+  roi: 'le roi',
+  nez: 'le nez',
+  main: 'la main',
+  maison: 'la maison',
+  ballon: 'le ballon',
+  crayon: 'le crayon',
+  lapin: 'le lapin',
+  ami: 'un ami',
   'la grand-mère': 'la gran-mère',
   'le grand-père': 'le gran-père',
 }

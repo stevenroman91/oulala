@@ -170,6 +170,61 @@ const server = createServer(async (req, res) => {
       return
     }
 
+    // API : métadonnées de la voix utilisée par le jeu (langue, accent…).
+    // Donne une réponse CERTAINE « la voix est-elle française ? » sans rien
+    // écouter — d'après les métadonnées officielles d'ElevenLabs.
+    if (path === '/api/voice-info') {
+      if (!EL_KEY || !EL_VOICE) {
+        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' })
+        res.end(JSON.stringify({ error: 'TTS non configuré' }))
+        return
+      }
+      try {
+        const r = await fetch(`https://api.elevenlabs.io/v1/voices/${EL_VOICE}`, {
+          headers: { 'xi-api-key': EL_KEY, Accept: 'application/json' },
+        })
+        const raw = await r.text()
+        if (!r.ok) {
+          res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' })
+          res.end(`Erreur ElevenLabs ${r.status} pour voice ${EL_VOICE} :\n${raw.slice(0, 800)}`)
+          return
+        }
+        const v = JSON.parse(raw)
+        const labels = v.labels || {}
+        // Verdict simple à partir des métadonnées.
+        const lang = (
+          labels.language ||
+          (v.verified_languages && v.verified_languages[0] && v.verified_languages[0].language) ||
+          (v.fine_tuning && v.fine_tuning.language) ||
+          ''
+        ).toString().toLowerCase()
+        const isFrench = /fr|french|français/.test(lang) || /fr|french|français/.test(JSON.stringify(labels).toLowerCase())
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' })
+        res.end(
+          JSON.stringify(
+            {
+              verdict: lang
+                ? isFrench
+                  ? '✅ Voix FRANÇAISE'
+                  : `⚠️ Voix NON française (langue : ${lang})`
+                : '❔ langue non précisée dans les métadonnées (voir labels)',
+              name: v.name,
+              voiceId: EL_VOICE,
+              category: v.category,
+              labels,
+              verified_languages: v.verified_languages || null,
+            },
+            null,
+            2,
+          ),
+        )
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'erreur interne', detail: String(err) }))
+      }
+      return
+    }
+
     // API : synthèse vocale.
     if (path === '/api/tts') {
       // POST : utilisé par l'app. GET : test audible à ouvrir dans le

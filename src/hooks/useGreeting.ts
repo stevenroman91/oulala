@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { speak } from '../services/audio'
 
-/** Phrase de présentation de Lumi, jouée à l'arrivée sur le jeu. */
+/** Présentation de Lumi, jouée UNIQUEMENT à la création du compte (onboarding). */
 export const LUMI_INTRO =
-  'Bonjour ! Moi, c’est Lumi. On va apprendre le français en s’amusant !'
+  'Bonjour ! Moi, c’est Lumi. On va apprendre le français en s’amusant ! Comment tu t’appelles ?'
 
 /* ============================================================
    Les navigateurs bloquent le son tant que l'enfant n'a pas

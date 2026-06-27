@@ -7,6 +7,9 @@ import { MatchPairs } from './MatchPairs'
 import { Spell } from './Spell'
 import { Conjugate } from './Conjugate'
 import { Reading } from './Reading'
+import { Memory } from './Memory'
+import { Sort } from './Sort'
+import { Intruder } from './Intruder'
 import type { ExerciseProps } from './shared'
 
 /** Aiguille chaque exercice vers le bon composant de jeu. */
@@ -31,5 +34,11 @@ export function ExerciseView({
       return <Conjugate exercise={exercise} {...props} />
     case 'reading':
       return <Reading exercise={exercise} {...props} />
+    case 'memory':
+      return <Memory exercise={exercise} {...props} />
+    case 'sort':
+      return <Sort exercise={exercise} {...props} />
+    case 'intruder':
+      return <Intruder exercise={exercise} {...props} />
   }
 }

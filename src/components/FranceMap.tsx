@@ -27,13 +27,11 @@ export function FranceMap({
   stops,
   currentId,
   avatar,
-  costumeEmoji,
   onSelect,
 }: {
   stops: MapStop[]
   currentId: string | null
   avatar: string
-  costumeEmoji?: string
   onSelect: (id: string) => void
 }) {
   const currentIndex = Math.max(
@@ -125,23 +123,16 @@ export function FranceMap({
         })}
         {/* Lumi sur l'étape en cours */}
         {lumi && (
-          <g>
-            <motion.text
-              x={lumi.coord.x}
-              y={lumi.coord.y - 6}
-              fontSize="8"
-              textAnchor="middle"
-              animate={{ y: [lumi.coord.y - 6, lumi.coord.y - 8, lumi.coord.y - 6] }}
-              transition={{ duration: 1.8, repeat: Infinity }}
-            >
-              {avatar}
-            </motion.text>
-            {costumeEmoji && (
-              <text x={lumi.coord.x + 3} y={lumi.coord.y - 8} fontSize="4.5" textAnchor="middle">
-                {costumeEmoji}
-              </text>
-            )}
-          </g>
+          <motion.text
+            x={lumi.coord.x}
+            y={lumi.coord.y - 6}
+            fontSize="8"
+            textAnchor="middle"
+            animate={{ y: [lumi.coord.y - 6, lumi.coord.y - 8, lumi.coord.y - 6] }}
+            transition={{ duration: 1.8, repeat: Infinity }}
+          >
+            {avatar}
+          </motion.text>
         )}
       </svg>
     </div>

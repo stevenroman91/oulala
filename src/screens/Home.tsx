@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { closestRate, DAILY_GOAL, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Lesson } from '../data/curriculum'
@@ -39,12 +39,14 @@ function LessonNode({
 }) {
   return (
     <motion.button
+      id={`lesson-${lesson.id}`}
       whileTap={{ scale: 0.94 }}
       onClick={status === 'locked' ? undefined : onClick}
       style={{
         width: 92,
         height: 92,
         borderRadius: 28,
+        scrollMarginTop: 80,
         background: status === 'locked' ? 'var(--cream-deep)' : color,
         color: status === 'locked' ? 'var(--ink-soft)' : '#fff',
         boxShadow:
@@ -140,6 +142,20 @@ export function Home() {
   function goToRegion(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  // En revenant d'une leçon, on défile jusqu'à là où l'enfant en est (et non
+  // tout en haut sur la carte).
+  const location = useLocation()
+  const focusLesson = (location.state as { focusLesson?: string } | null)?.focusLesson
+  useEffect(() => {
+    if (!focusLesson) return
+    const t = setTimeout(() => {
+      document
+        .getElementById(`lesson-${focusLesson}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 120)
+    return () => clearTimeout(t)
+  }, [focusLesson])
 
   // Détermine l'état de chaque leçon : la première non terminée est "current".
   let foundCurrent = false
@@ -333,7 +349,6 @@ export function Home() {
             stops={mapStops}
             currentId={currentStop?.id ?? null}
             avatar={profile.avatar}
-            costumeEmoji={equippedCostume?.emoji}
             onSelect={goToRegion}
           />
 

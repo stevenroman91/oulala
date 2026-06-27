@@ -81,7 +81,7 @@ function LessonNode({
 }
 
 export function Home() {
-  const { profile, toggleSound, setRate, setLevel, reset, unlockCostume, equipCostume } =
+  const { profile, toggleSound, setRate, setLevel, switchToPicker, unlockCostume, equipCostume } =
     useProfile()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -547,25 +547,17 @@ export function Home() {
               <button
                 className="btn btn--coral"
                 onClick={() => {
-                  // Pas de compte : « se déconnecter » = effacer le profil
-                  // local et revenir à l'écran de bienvenue.
-                  if (
-                    window.confirm(
-                      'Changer de héros ? La progression de ' +
-                        profile.name +
-                        ' sera effacée sur cet appareil.',
-                    )
-                  ) {
-                    reset()
-                    navigate('/bienvenue', { replace: true })
-                  }
+                  // Change de joueur sans rien effacer : retour au choix des
+                  // comptes. Chaque enfant garde sa progression.
+                  switchToPicker()
+                  navigate('/profils', { replace: true })
                 }}
               >
-                👋 Changer de héros
+                👋 Changer de joueur
               </button>
 
               <p className="center muted" style={{ fontSize: '0.75rem', margin: 0 }}>
-                Lumi fonctionne sans compte : la progression reste sur cet appareil.
+                Chaque enfant a son compte : sa progression est sauvegardée.
               </p>
             </motion.div>
           </motion.div>

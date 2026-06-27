@@ -29,6 +29,7 @@ export interface WordMemory {
 }
 
 export interface Profile {
+  id: string
   name: string
   avatar: string
   level: LevelId | null
@@ -70,6 +71,7 @@ export function closestRate(value: number) {
 }
 
 const DEFAULT_PROFILE: Profile = {
+  id: '',
   name: '',
   avatar: '🦊',
   level: null,
@@ -85,7 +87,22 @@ const DEFAULT_PROFILE: Profile = {
   rate: 1,
 }
 
-const STORAGE_KEY = 'lumi.profile.v1'
+const STORAGE_KEY = 'lumi.profile.v1' // ancien format (un seul profil)
+const STORE_KEY = 'lumi.store.v1' // nouveau format (plusieurs profils)
+
+interface Store {
+  profiles: Profile[]
+  activeId: string | null
+}
+
+function newId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+  } catch {
+    /* ignore */
+  }
+  return 'p' + Date.now() + Math.floor(Math.random() * 100000)
+}
 
 function todayStr(): string {
   // Date locale au format AAAA-MM-JJ (sans dépendance externe).
@@ -125,20 +142,43 @@ function touchStreak(p: Profile): { streak: number; lastActiveDate: string } {
   return { streak: 1, lastActiveDate: today }
 }
 
-function load(): Profile {
+function loadStore(): Store {
+  // Nouveau format multi-profils.
+  try {
+    const raw = localStorage.getItem(STORE_KEY)
+    if (raw) {
+      const s = JSON.parse(raw) as Store
+      const profiles = (s.profiles || []).map((p) => ({ ...DEFAULT_PROFILE, ...p }))
+      return { profiles, activeId: s.activeId ?? null }
+    }
+  } catch {
+    /* ignore */
+  }
+  // Migration depuis l'ancien format (un seul profil).
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_PROFILE
-    return { ...DEFAULT_PROFILE, ...JSON.parse(raw) }
+    if (raw) {
+      const old = { ...DEFAULT_PROFILE, ...JSON.parse(raw) }
+      if (old.name) {
+        const migrated = { ...old, id: old.id || newId() }
+        return { profiles: [migrated], activeId: migrated.id }
+      }
+    }
   } catch {
-    return DEFAULT_PROFILE
+    /* ignore */
   }
+  return { profiles: [], activeId: null }
 }
 
 interface ProfileContextValue {
   profile: Profile
+  profiles: Profile[]
+  hasActive: boolean
   isOnboarded: boolean
   createProfile: (data: { name: string; avatar: string; level: LevelId }) => void
+  selectProfile: (id: string) => void
+  deleteProfile: (id: string) => void
+  switchToPicker: () => void
   setLevel: (level: LevelId) => void
   recordLesson: (lessonId: string, stars: number, scorePct: number) => void
   learnWords: (words: { fr: string; emoji: string }[]) => void
@@ -147,21 +187,23 @@ interface ProfileContextValue {
   equipCostume: (id: string | null) => void
   toggleSound: () => void
   setRate: (rate: number) => void
-  reset: () => void
 }
 
 const Ctx = createContext<ProfileContextValue | null>(null)
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<Profile>(load)
+  const [store, setStore] = useState<Store>(loadStore)
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+      localStorage.setItem(STORE_KEY, JSON.stringify(store))
     } catch {
       /* stockage indisponible : on continue sans persistance */
     }
-  }, [profile])
+  }, [store])
+
+  const active = store.profiles.find((p) => p.id === store.activeId) ?? null
+  const profile = active ?? DEFAULT_PROFILE
 
   // Synchronise les réglages voix avec le service audio.
   useEffect(() => {
@@ -169,32 +211,56 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setMuted(!profile.soundOn)
   }, [profile.rate, profile.soundOn])
 
+  /** Applique une mise à jour au profil actif. */
+  const updateActive = useCallback((fn: (p: Profile) => Profile) => {
+    setStore((s) => ({
+      ...s,
+      profiles: s.profiles.map((p) => (p.id === s.activeId ? fn(p) : p)),
+    }))
+  }, [])
+
+  // --- Gestion des comptes (profils) ---
   const createProfile = useCallback(
     (data: { name: string; avatar: string; level: LevelId }) => {
-      setProfile((p) => ({ ...p, ...data }))
+      setStore((s) => {
+        const p: Profile = { ...DEFAULT_PROFILE, id: newId(), ...data }
+        return { profiles: [...s.profiles, p], activeId: p.id }
+      })
     },
     [],
   )
 
-  const setLevel = useCallback((level: LevelId) => {
-    setProfile((p) => ({ ...p, level }))
+  const selectProfile = useCallback((id: string) => {
+    setStore((s) => ({ ...s, activeId: id }))
   }, [])
 
+  const deleteProfile = useCallback((id: string) => {
+    setStore((s) => ({
+      profiles: s.profiles.filter((p) => p.id !== id),
+      activeId: s.activeId === id ? null : s.activeId,
+    }))
+  }, [])
+
+  const switchToPicker = useCallback(() => {
+    setStore((s) => ({ ...s, activeId: null }))
+  }, [])
+
+  // --- Mutations du profil actif ---
+  const setLevel = useCallback(
+    (level: LevelId) => updateActive((p) => ({ ...p, level })),
+    [updateActive],
+  )
+
   const recordLesson = useCallback(
-    (lessonId: string, stars: number, scorePct: number) => {
-      setProfile((p) => {
+    (lessonId: string, stars: number, scorePct: number) =>
+      updateActive((p) => {
         const prev = p.lessons[lessonId]
         const bestStars = Math.max(prev?.stars ?? 0, stars)
         const bestScore = Math.max(prev?.bestScore ?? 0, scorePct)
-
-        // XP : 10 par leçon terminée + 5 par étoile, seulement si on
-        // progresse (on ne farme pas l'XP en rejouant une leçon déjà max).
         const gainedStars = Math.max(0, bestStars - (prev?.stars ?? 0))
         const firstTime = !prev
         const xpGain = (firstTime ? 10 : 0) + gainedStars * 5
-
         const { streak, lastActiveDate } = touchStreak(p)
-
         return {
           ...p,
           xp: p.xp + xpGain,
@@ -203,78 +269,81 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           lastActiveDate,
           daily: bumpDaily(p.daily, xpGain),
         }
-      })
-    },
-    [],
+      }),
+    [updateActive],
   )
 
-  // Mémorise les mots d'une leçon terminée (entrée dans la révision espacée).
-  const learnWords = useCallback((words: { fr: string; emoji: string }[]) => {
-    setProfile((p) => {
-      const today = todayStr()
-      const next = { ...p.words }
-      for (const w of words) {
-        if (!next[w.fr]) next[w.fr] = { emoji: w.emoji, level: 0, due: today }
-        else next[w.fr] = { ...next[w.fr], emoji: w.emoji }
-      }
-      return { ...p, words: next }
-    })
-  }, [])
+  const learnWords = useCallback(
+    (words: { fr: string; emoji: string }[]) =>
+      updateActive((p) => {
+        const today = todayStr()
+        const next = { ...p.words }
+        for (const w of words) {
+          if (!next[w.fr]) next[w.fr] = { emoji: w.emoji, level: 0, due: today }
+          else next[w.fr] = { ...next[w.fr], emoji: w.emoji }
+        }
+        return { ...p, words: next }
+      }),
+    [updateActive],
+  )
 
-  // Met à jour la mémoire d'un mot après une révision (Leitner).
-  const reviewWord = useCallback((fr: string, correct: boolean) => {
-    setProfile((p) => {
-      const mem = p.words[fr]
-      if (!mem) return p
-      const today = todayStr()
-      const level = correct ? Math.min(mem.level + 1, LEITNER_DAYS.length - 1) : 0
-      const due = addDays(today, LEITNER_DAYS[level])
-      const xpGain = correct ? 2 : 0
-      const { streak, lastActiveDate } = touchStreak(p)
-      return {
-        ...p,
-        words: { ...p.words, [fr]: { ...mem, level, due } },
-        xp: p.xp + xpGain,
-        daily: bumpDaily(p.daily, xpGain),
-        streak,
-        lastActiveDate,
-      }
-    })
-  }, [])
+  const reviewWord = useCallback(
+    (fr: string, correct: boolean) =>
+      updateActive((p) => {
+        const mem = p.words[fr]
+        if (!mem) return p
+        const today = todayStr()
+        const level = correct ? Math.min(mem.level + 1, LEITNER_DAYS.length - 1) : 0
+        const due = addDays(today, LEITNER_DAYS[level])
+        const xpGain = correct ? 2 : 0
+        const { streak, lastActiveDate } = touchStreak(p)
+        return {
+          ...p,
+          words: { ...p.words, [fr]: { ...mem, level, due } },
+          xp: p.xp + xpGain,
+          daily: bumpDaily(p.daily, xpGain),
+          streak,
+          lastActiveDate,
+        }
+      }),
+    [updateActive],
+  )
 
-  // Débloque un costume (et l'équipe si c'est le premier).
-  const unlockCostume = useCallback((id: string) => {
-    setProfile((p) => {
-      if (p.costumes.includes(id)) return p
-      return {
-        ...p,
-        costumes: [...p.costumes, id],
-        costume: p.costume ?? id,
-      }
-    })
-  }, [])
+  const unlockCostume = useCallback(
+    (id: string) =>
+      updateActive((p) =>
+        p.costumes.includes(id)
+          ? p
+          : { ...p, costumes: [...p.costumes, id], costume: p.costume ?? id },
+      ),
+    [updateActive],
+  )
 
-  const equipCostume = useCallback((id: string | null) => {
-    setProfile((p) => ({ ...p, costume: id }))
-  }, [])
+  const equipCostume = useCallback(
+    (id: string | null) => updateActive((p) => ({ ...p, costume: id })),
+    [updateActive],
+  )
 
-  const toggleSound = useCallback(() => {
-    setProfile((p) => ({ ...p, soundOn: !p.soundOn }))
-  }, [])
+  const toggleSound = useCallback(
+    () => updateActive((p) => ({ ...p, soundOn: !p.soundOn })),
+    [updateActive],
+  )
 
-  const setRate = useCallback((rate: number) => {
-    setProfile((p) => ({ ...p, rate }))
-  }, [])
-
-  const reset = useCallback(() => {
-    setProfile(DEFAULT_PROFILE)
-  }, [])
+  const setRate = useCallback(
+    (rate: number) => updateActive((p) => ({ ...p, rate })),
+    [updateActive],
+  )
 
   const value = useMemo<ProfileContextValue>(
     () => ({
       profile,
-      isOnboarded: Boolean(profile.name && profile.level),
+      profiles: store.profiles,
+      hasActive: Boolean(active),
+      isOnboarded: Boolean(active && profile.name && profile.level),
       createProfile,
+      selectProfile,
+      deleteProfile,
+      switchToPicker,
       setLevel,
       recordLesson,
       learnWords,
@@ -283,11 +352,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       equipCostume,
       toggleSound,
       setRate,
-      reset,
     }),
     [
       profile,
+      store.profiles,
+      active,
       createProfile,
+      selectProfile,
+      deleteProfile,
+      switchToPicker,
       setLevel,
       recordLesson,
       learnWords,
@@ -296,7 +369,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       equipCostume,
       toggleSound,
       setRate,
-      reset,
     ],
   )
 

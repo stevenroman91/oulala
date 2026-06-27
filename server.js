@@ -149,9 +149,19 @@ const server = createServer(async (req, res) => {
     const path = (req.url || '/').split('?')[0]
 
     // API : capacités du serveur (toujours 200, pour sonder sans erreur).
+    // On expose aussi le voice_id + modèle EMPLOYÉS PAR LE JEU (un voice_id
+    // n'est pas secret) pour pouvoir vérifier qu'ils correspondent bien à la
+    // voix française attendue. La clé API, elle, n'est jamais exposée.
     if (path === '/api/config') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' })
-      res.end(JSON.stringify({ tts: Boolean(EL_KEY && EL_VOICE) }))
+      res.end(
+        JSON.stringify({
+          tts: Boolean(EL_KEY && EL_VOICE),
+          voiceId: EL_VOICE || null,
+          model: EL_MODEL,
+          forceFr: EL_FORCE_FR,
+        }),
+      )
       return
     }
 

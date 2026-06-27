@@ -27,9 +27,16 @@ let muted = false
 // fait dire avec leur article, forme confirmée comme correcte, sans changer
 // ce qui est affiché à l'écran. (Aussi appliqué côté serveur, voir server.js.)
 const PRONUNCIATION: Record<string, string> = {
+  // Mots à finale muette / homographes : l'article donne le contexte français
+  // et corrige la prononciation (au pire, ajoute un « le/la » inoffensif).
   chat: 'le chat',
   loup: 'le loup',
   rat: 'le rat',
+  pont: 'le pont',
+  pain: 'le pain',
+  pin: 'le pin',
+  lit: 'le lit',
+  bain: 'le bain',
   // « grand-mère/père » : le moteur féminise « grand » → « grande ». On écrit
   // la forme phonétique sans « d » pour garder le « grand » nasal et muet.
   'la grand-mère': 'la gran-mère',

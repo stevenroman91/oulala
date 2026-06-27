@@ -99,6 +99,11 @@ const PRONUNCIATION = {
   chat: 'le chat',
   loup: 'le loup',
   rat: 'le rat',
+  pont: 'le pont',
+  pain: 'le pain',
+  pin: 'le pin',
+  lit: 'le lit',
+  bain: 'le bain',
   'la grand-mère': 'la gran-mère',
   'le grand-père': 'le gran-père',
 }

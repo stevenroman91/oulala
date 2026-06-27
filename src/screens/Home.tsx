@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { closestRate, DAILY_GOAL, SPEECH_RATES, useProfile } from '../state/ProfileContext'
-import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
+import { getCurriculum, LEVELS, type Lesson } from '../data/curriculum'
+import { journeyStops } from '../data/france'
 import { dueCount } from '../data/review'
 import { speak } from '../services/audio'
 
@@ -93,6 +94,11 @@ export function Home() {
   const questDone = dailyXp >= DAILY_GOAL
   const learnedTotal = Object.keys(profile.words).length
   const due = dueCount(profile)
+
+  // Le voyage en France : les leçons regroupées par étape (région).
+  const stops = journeyStops(level, curriculum)
+  const regionDone = (islands: { lessons: Lesson[] }[]) =>
+    islands.every((isl) => isl.lessons.every((l) => Boolean(profile.lessons[l.id])))
 
   // Détermine l'état de chaque leçon : la première non terminée est "current".
   let foundCurrent = false
@@ -265,43 +271,105 @@ export function Home() {
         </span>
       </motion.button>
 
-      {/* Carte des îles */}
-      {curriculum.islands.length === 0 ? (
+      {/* Le voyage de Lumi en France */}
+      {stops.length === 0 ? (
         <div className="card center muted">
           Ce niveau arrive très bientôt&nbsp;! 🚧
         </div>
       ) : (
-        curriculum.islands.map((island: Island) => (
-          <div key={island.id} className="stack" style={{ gap: 12 }}>
-            <div className="row" style={{ gap: 10, marginTop: 6 }}>
-              <span style={{ fontSize: '1.6rem' }}>{island.emoji}</span>
-              <h2 style={{ fontSize: '1.2rem' }}>{island.title}</h2>
+        <>
+          {/* Carnet de voyage : un tampon par région */}
+          <div className="card" style={{ borderRadius: 24 }}>
+            <div className="row" style={{ gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: '1.3rem' }}>🇫🇷</span>
+              <h2 style={{ fontSize: '1.05rem' }}>Mon voyage en France</h2>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 18,
-                rowGap: 26,
-                padding: '4px 4px 8px',
-              }}
-            >
-              {island.lessons.map((lesson) => {
-                const result = profile.lessons[lesson.id]
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {stops.map(({ stop, islands }) => {
+                const done = regionDone(islands)
                 return (
-                  <LessonNode
-                    key={lesson.id}
-                    lesson={lesson}
-                    color={island.color}
-                    status={statusOf(lesson)}
-                    stars={result?.stars ?? 0}
-                    onClick={() => navigate(`/lecon/${lesson.id}`)}
-                  />
+                  <div
+                    key={stop.id}
+                    title={stop.region}
+                    style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '50%',
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: '1.4rem',
+                      background: done ? stop.color : 'var(--cream-deep)',
+                      filter: done ? 'none' : 'grayscale(0.6) opacity(0.7)',
+                      boxShadow: done ? '0 3px 0 rgba(58,46,42,0.18)' : 'none',
+                    }}
+                  >
+                    {done ? '⭐' : stop.emoji}
+                  </div>
                 )
               })}
             </div>
           </div>
-        ))
+
+          {/* Les étapes du voyage */}
+          {stops.map(({ stop, islands }) => (
+            <div key={stop.id} className="stack" style={{ gap: 12 }}>
+              {/* Bannière de la région */}
+              <div
+                className="card row"
+                style={{
+                  gap: 12,
+                  marginTop: 6,
+                  background: stop.color,
+                  color: '#fff',
+                  borderRadius: 22,
+                }}
+              >
+                <span style={{ fontSize: '2rem' }}>{stop.emoji}</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 900, fontSize: '1.15rem' }}>
+                    {stop.region}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', opacity: 0.95, fontWeight: 700 }}>
+                    {stop.blurb}
+                  </div>
+                </div>
+              </div>
+
+              {/* Les thèmes (îles) de la région */}
+              {islands.map((island) => (
+                <div key={island.id} className="stack" style={{ gap: 8 }}>
+                  <div className="row" style={{ gap: 8, marginTop: 2 }}>
+                    <span style={{ fontSize: '1.2rem' }}>{island.emoji}</span>
+                    <h3 style={{ fontSize: '1rem' }}>{island.title}</h3>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 18,
+                      rowGap: 24,
+                      padding: '2px 4px 6px',
+                    }}
+                  >
+                    {island.lessons.map((lesson) => {
+                      const result = profile.lessons[lesson.id]
+                      return (
+                        <LessonNode
+                          key={lesson.id}
+                          lesson={lesson}
+                          color={island.color}
+                          status={statusOf(lesson)}
+                          stars={result?.stars ?? 0}
+                          onClick={() => navigate(`/lecon/${lesson.id}`)}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </>
       )}
 
       {/* Fenêtre Réglages / Profil */}

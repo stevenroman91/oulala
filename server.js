@@ -96,6 +96,8 @@ const PRONUNCIATION = {
   chat: 'le chat',
   loup: 'le loup',
   rat: 'le rat',
+  'la grand-mère': 'la gran-mère',
+  'le grand-père': 'le gran-père',
 }
 function withPronunciation(text) {
   return PRONUNCIATION[String(text).trim().toLowerCase()] || text

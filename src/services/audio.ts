@@ -30,6 +30,10 @@ const PRONUNCIATION: Record<string, string> = {
   chat: 'le chat',
   loup: 'le loup',
   rat: 'le rat',
+  // « grand-mère/père » : le moteur féminise « grand » → « grande ». On écrit
+  // la forme phonétique sans « d » pour garder le « grand » nasal et muet.
+  'la grand-mère': 'la gran-mère',
+  'le grand-père': 'le gran-père',
 }
 function withPronunciation(text: string): string {
   return PRONUNCIATION[text.trim().toLowerCase()] ?? text

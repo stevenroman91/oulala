@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { findLesson } from '../data/curriculum'
+import { lessonWords } from '../data/review'
 import { useProfile } from '../state/ProfileContext'
 import { ExerciseView } from '../exercises/ExerciseView'
 import { Mascot } from '../components/Mascot'
@@ -12,7 +13,7 @@ const ENCOURAGE = ['Bravo ! 🎉', 'Super ! ⭐', 'Génial ! 🌟', 'Trop fort !
 export function Lesson() {
   const { lessonId } = useParams()
   const navigate = useNavigate()
-  const { profile, recordLesson } = useProfile()
+  const { profile, recordLesson, learnWords } = useProfile()
 
   const found = useMemo(
     () => (lessonId ? findLesson(profile.level!, lessonId) : null),
@@ -47,6 +48,7 @@ export function Lesson() {
       const pct = Math.round((newCorrect / total) * 100)
       const stars = pct >= 90 ? 3 : pct >= 60 ? 2 : 1
       recordLesson(lesson.id, stars, pct)
+      learnWords(lessonWords(lesson)) // entrée dans la révision espacée
       playFanfare()
       setFinished(true)
       return

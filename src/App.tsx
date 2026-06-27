@@ -3,6 +3,7 @@ import { useProfile } from './state/ProfileContext'
 import { Onboarding } from './screens/Onboarding'
 import { Home } from './screens/Home'
 import { Lesson } from './screens/Lesson'
+import { Review } from './screens/Review'
 import { Chat } from './screens/Chat'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
           element={isOnboarded ? <Navigate to="/" replace /> : <Onboarding />}
         />
         <Route path="/lecon/:lessonId" element={<Lesson />} />
+        <Route path="/revision" element={<Review />} />
         <Route path="/parler" element={<Chat />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

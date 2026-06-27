@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { closestRate, SPEECH_RATES, useProfile } from '../state/ProfileContext'
+import { closestRate, DAILY_GOAL, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
+import { dueCount } from '../data/review'
 import { speak } from '../services/audio'
 
 function Stat({ icon, value, label }: { icon: string; value: string | number; label: string }) {
@@ -84,6 +85,14 @@ export function Home() {
   const curriculum = getCurriculum(level)
   const levelMeta = LEVELS.find((l) => l.id === level)!
 
+  // Quête du jour + révision espacée.
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const dailyXp = profile.daily.date === todayStr ? profile.daily.xp : 0
+  const questPct = Math.min(100, Math.round((dailyXp / DAILY_GOAL) * 100))
+  const questDone = dailyXp >= DAILY_GOAL
+  const learnedTotal = Object.keys(profile.words).length
+  const due = dueCount(profile)
 
   // Détermine l'état de chaque leçon : la première non terminée est "current".
   let foundCurrent = false
@@ -159,6 +168,79 @@ export function Home() {
           label="leçons finies"
         />
       </div>
+
+      {/* Quête du jour */}
+      <div
+        className="card"
+        style={{
+          borderRadius: 26,
+          background: questDone
+            ? 'linear-gradient(120deg, var(--good), var(--teal))'
+            : '#fff',
+          color: questDone ? '#fff' : 'var(--ink)',
+        }}
+      >
+        <div className="row" style={{ gap: 10 }}>
+          <span style={{ fontSize: '1.8rem' }}>{questDone ? '🏅' : '🎯'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 900 }}>
+              {questDone ? 'Quête du jour réussie !' : 'Quête du jour'}
+            </div>
+            <div style={{ fontSize: '0.8rem', opacity: 0.85, fontWeight: 700 }}>
+              {questDone ? 'Reviens demain pour la suite 🔥' : `Gagne ${DAILY_GOAL} ⭐ aujourd'hui`}
+            </div>
+          </div>
+          <div style={{ fontWeight: 900 }}>
+            {dailyXp}/{DAILY_GOAL}
+          </div>
+        </div>
+        {!questDone && (
+          <div className="progress-track" style={{ marginTop: 10 }}>
+            <div className="progress-fill" style={{ width: `${questPct}%` }} />
+          </div>
+        )}
+      </div>
+
+      {/* Révision (répétition espacée) */}
+      {learnedTotal > 0 && (
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigate('/revision')}
+          className="card row"
+          style={{
+            background: 'linear-gradient(120deg, var(--sun), var(--coral))',
+            color: '#fff',
+            gap: 14,
+            borderRadius: 26,
+          }}
+        >
+          <span style={{ fontSize: '2.2rem' }}>🧠</span>
+          <span style={{ textAlign: 'left', flex: 1 }}>
+            <span style={{ display: 'block', fontWeight: 900, fontSize: '1.1rem' }}>
+              Révision du jour
+            </span>
+            <span style={{ fontSize: '0.85rem', opacity: 0.95 }}>
+              {due > 0
+                ? `${due} mot${due > 1 ? 's' : ''} à revoir avec Lumi`
+                : 'Entretiens ta mémoire 💪'}
+            </span>
+          </span>
+          {due > 0 && (
+            <span
+              style={{
+                background: '#fff',
+                color: 'var(--coral)',
+                fontWeight: 900,
+                borderRadius: 999,
+                padding: '2px 12px',
+                fontSize: '1.1rem',
+              }}
+            >
+              {due}
+            </span>
+          )}
+        </motion.button>
+      )}
 
       {/* Parler avec Lumi */}
       <motion.button

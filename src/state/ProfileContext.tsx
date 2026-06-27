@@ -21,6 +21,13 @@ export interface LessonResult {
   bestScore: number // % de bonnes réponses
 }
 
+/** Mémoire d'un mot pour la répétition espacée (système de Leitner). */
+export interface WordMemory {
+  emoji: string
+  level: number // 0 = fragile → plus haut = bien su
+  due: string // prochaine révision (AAAA-MM-JJ)
+}
+
 export interface Profile {
   name: string
   avatar: string
@@ -28,11 +35,20 @@ export interface Profile {
   xp: number
   // Progression par leçon : id -> résultat.
   lessons: Record<string, LessonResult>
+  // Mémoire des mots appris (clé = mot affiché) pour la révision espacée.
+  words: Record<string, WordMemory>
   streak: number
   lastActiveDate: string | null // AAAA-MM-JJ
+  // Objectif du jour : XP gagnés aujourd'hui.
+  daily: { date: string; xp: number }
   soundOn: boolean
   rate: number // vitesse de lecture de la voix (0.6 lent → 1.1 rapide)
 }
+
+/** Intervalles de révision (en jours) selon le niveau de maîtrise. */
+const LEITNER_DAYS = [1, 2, 4, 8, 16, 30]
+/** Objectif d'XP quotidien (la « quête du jour »). */
+export const DAILY_GOAL = 30
 
 /** Vitesses proposées à l'enfant (multiplicateur : 1 = normal). S'applique
  *  à la voix premium (playbackRate) comme à la voix du navigateur. */
@@ -56,8 +72,10 @@ const DEFAULT_PROFILE: Profile = {
   level: null,
   xp: 0,
   lessons: {},
+  words: {},
   streak: 0,
   lastActiveDate: null,
+  daily: { date: '', xp: 0 },
   soundOn: true,
   rate: 1,
 }
@@ -78,6 +96,30 @@ function daysBetween(a: string, b: string): number {
   return Math.round((db.getTime() - da.getTime()) / 86400000)
 }
 
+function addDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate(),
+  ).padStart(2, '0')}`
+}
+
+/** XP du jour, remis à zéro si on change de journée. */
+function bumpDaily(daily: Profile['daily'], gain: number): Profile['daily'] {
+  const today = todayStr()
+  if (daily.date !== today) return { date: today, xp: gain }
+  return { date: today, xp: daily.xp + gain }
+}
+
+/** Met à jour la série (jours consécutifs) au passage d'une activité. */
+function touchStreak(p: Profile): { streak: number; lastActiveDate: string } {
+  const today = todayStr()
+  if (p.lastActiveDate === today) return { streak: p.streak, lastActiveDate: today }
+  if (p.lastActiveDate && daysBetween(p.lastActiveDate, today) === 1)
+    return { streak: p.streak + 1, lastActiveDate: today }
+  return { streak: 1, lastActiveDate: today }
+}
+
 function load(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -94,6 +136,8 @@ interface ProfileContextValue {
   createProfile: (data: { name: string; avatar: string; level: LevelId }) => void
   setLevel: (level: LevelId) => void
   recordLesson: (lessonId: string, stars: number, scorePct: number) => void
+  learnWords: (words: { fr: string; emoji: string }[]) => void
+  reviewWord: (fr: string, correct: boolean) => void
   toggleSound: () => void
   setRate: (rate: number) => void
   reset: () => void
@@ -142,29 +186,54 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const firstTime = !prev
         const xpGain = (firstTime ? 10 : 0) + gainedStars * 5
 
-        // Série : +1 si nouveau jour consécutif, reset si trou.
-        const today = todayStr()
-        let streak = p.streak
-        if (p.lastActiveDate !== today) {
-          if (p.lastActiveDate && daysBetween(p.lastActiveDate, today) === 1) {
-            streak = p.streak + 1
-          } else {
-            streak = 1
-          }
-        }
-        if (!p.lastActiveDate) streak = 1
+        const { streak, lastActiveDate } = touchStreak(p)
 
         return {
           ...p,
           xp: p.xp + xpGain,
           lessons: { ...p.lessons, [lessonId]: { stars: bestStars, bestScore } },
           streak,
-          lastActiveDate: today,
+          lastActiveDate,
+          daily: bumpDaily(p.daily, xpGain),
         }
       })
     },
     [],
   )
+
+  // Mémorise les mots d'une leçon terminée (entrée dans la révision espacée).
+  const learnWords = useCallback((words: { fr: string; emoji: string }[]) => {
+    setProfile((p) => {
+      const today = todayStr()
+      const next = { ...p.words }
+      for (const w of words) {
+        if (!next[w.fr]) next[w.fr] = { emoji: w.emoji, level: 0, due: today }
+        else next[w.fr] = { ...next[w.fr], emoji: w.emoji }
+      }
+      return { ...p, words: next }
+    })
+  }, [])
+
+  // Met à jour la mémoire d'un mot après une révision (Leitner).
+  const reviewWord = useCallback((fr: string, correct: boolean) => {
+    setProfile((p) => {
+      const mem = p.words[fr]
+      if (!mem) return p
+      const today = todayStr()
+      const level = correct ? Math.min(mem.level + 1, LEITNER_DAYS.length - 1) : 0
+      const due = addDays(today, LEITNER_DAYS[level])
+      const xpGain = correct ? 2 : 0
+      const { streak, lastActiveDate } = touchStreak(p)
+      return {
+        ...p,
+        words: { ...p.words, [fr]: { ...mem, level, due } },
+        xp: p.xp + xpGain,
+        daily: bumpDaily(p.daily, xpGain),
+        streak,
+        lastActiveDate,
+      }
+    })
+  }, [])
 
   const toggleSound = useCallback(() => {
     setProfile((p) => ({ ...p, soundOn: !p.soundOn }))
@@ -185,11 +254,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       createProfile,
       setLevel,
       recordLesson,
+      learnWords,
+      reviewWord,
       toggleSound,
       setRate,
       reset,
     }),
-    [profile, createProfile, setLevel, recordLesson, toggleSound, setRate, reset],
+    [
+      profile,
+      createProfile,
+      setLevel,
+      recordLesson,
+      learnWords,
+      reviewWord,
+      toggleSound,
+      setRate,
+      reset,
+    ],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

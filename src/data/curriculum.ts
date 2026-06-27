@@ -150,13 +150,14 @@ export interface Curriculum {
 /* ---- Registre des niveaux ---- */
 import { cp } from './cp'
 import { ce1 } from './ce1'
+import { ce2 } from './ce2'
 
 const placeholder = (level: LevelId): Curriculum => ({ level, islands: [] })
 
 export const CURRICULA: Record<LevelId, Curriculum> = {
   cp,
   ce1,
-  ce2: placeholder('ce2'),
+  ce2,
   cm1: placeholder('cm1'),
   cm2: placeholder('cm2'),
 }

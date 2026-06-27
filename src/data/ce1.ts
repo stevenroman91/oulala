@@ -277,5 +277,123 @@ export const ce1: Curriculum = {
         },
       ],
     },
+
+    /* -------------------------------------------------- LES MÉTIERS */
+    {
+      id: 'ce1-metiers',
+      title: 'Les métiers',
+      emoji: '👩‍🚒',
+      color: 'var(--sky)',
+      lessons: [
+        {
+          id: 'ce1-metiers-1',
+          title: 'Quand je serai grand',
+          emoji: '🚀',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'le docteur', emoji: '🩺' } },
+            { type: 'flashcard', word: { fr: 'le pompier', emoji: '🚒' } },
+            { type: 'flashcard', word: { fr: 'le boulanger', emoji: '🥖' } },
+            { type: 'flashcard', word: { fr: 'la maîtresse', emoji: '🧑‍🏫' } },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'le docteur', emoji: '🩺' },
+                { fr: 'le pompier', emoji: '🚒' },
+                { fr: 'le boulanger', emoji: '🥖' },
+              ],
+            },
+            {
+              type: 'pickImage',
+              prompt: { fr: 'le pompier', emoji: '🚒' },
+              options: [
+                { fr: 'le docteur', emoji: '🩺' },
+                { fr: 'le pompier', emoji: '🚒' },
+                { fr: 'le boulanger', emoji: '🥖' },
+                { fr: 'la maîtresse', emoji: '🧑‍🏫' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'Le pompier éteint le feu', emoji: '🚒' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LES CONTRAIRES */
+    {
+      id: 'ce1-contraires',
+      title: 'Les contraires',
+      emoji: '↔️',
+      color: 'var(--grape)',
+      lessons: [
+        {
+          id: 'ce1-contraires-1',
+          title: 'Grand ou petit ?',
+          emoji: '🐘',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'grand', emoji: '🐘' } },
+            { type: 'flashcard', word: { fr: 'petit', emoji: '🐭' } },
+            { type: 'flashcard', word: { fr: 'chaud', emoji: '🔥' } },
+            { type: 'flashcard', word: { fr: 'froid', emoji: '❄️' } },
+            {
+              type: 'sort',
+              prompt: 'Range : grand ou petit ?',
+              groups: [
+                { label: 'grand', emoji: '🐘' },
+                { label: 'petit', emoji: '🐭' },
+              ],
+              items: [
+                { word: { fr: 'éléphant', emoji: '🐘' }, group: 0 },
+                { word: { fr: 'souris', emoji: '🐭' }, group: 1 },
+                { word: { fr: 'baleine', emoji: '🐳' }, group: 0 },
+                { word: { fr: 'fourmi', emoji: '🐜' }, group: 1 },
+              ],
+            },
+            {
+              type: 'pickImage',
+              prompt: { fr: 'froid', emoji: '❄️' },
+              options: [
+                { fr: 'chaud', emoji: '🔥' },
+                { fr: 'froid', emoji: '❄️' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'L’éléphant est très grand', emoji: '🐘' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- CONJUGAISON (SUITE) */
+    {
+      id: 'ce1-conjugaison2',
+      title: 'Conjugaison (suite)',
+      emoji: '🧩',
+      color: 'var(--teal)',
+      lessons: [
+        {
+          id: 'ce1-conj-aller',
+          title: 'Le verbe « aller »',
+          emoji: '🚶',
+          exercises: [
+            { type: 'conjugate', pronoun: 'je', verb: 'aller', answer: 'vais', options: ['vais', 'vas', 'va'], emoji: '🚶' },
+            { type: 'conjugate', pronoun: 'tu', verb: 'aller', answer: 'vas', options: ['vas', 'va', 'vais'], emoji: '🚶' },
+            { type: 'conjugate', pronoun: 'il', verb: 'aller', answer: 'va', options: ['va', 'vas', 'vont'], emoji: '🚶' },
+            { type: 'conjugate', pronoun: 'nous', verb: 'aller', answer: 'allons', options: ['allons', 'allez', 'vont'], emoji: '🚶' },
+            { type: 'buildSentence', sentence: 'Je vais à l’école à pied', emoji: '🏫' },
+          ],
+        },
+        {
+          id: 'ce1-conj-faire',
+          title: 'Le verbe « faire »',
+          emoji: '🛠️',
+          exercises: [
+            { type: 'conjugate', pronoun: 'je', verb: 'faire', answer: 'fais', options: ['fais', 'fait', 'font'], emoji: '🛠️' },
+            { type: 'conjugate', pronoun: 'tu', verb: 'faire', answer: 'fais', options: ['fais', 'fait', 'faites'], emoji: '🛠️' },
+            { type: 'conjugate', pronoun: 'elle', verb: 'faire', answer: 'fait', options: ['fait', 'fais', 'font'], emoji: '🛠️' },
+            { type: 'conjugate', pronoun: 'nous', verb: 'faire', answer: 'faisons', options: ['faisons', 'faites', 'font'], emoji: '🛠️' },
+            { type: 'buildSentence', sentence: 'Nous faisons un beau dessin', emoji: '🖍️' },
+          ],
+        },
+      ],
+    },
   ],
 }

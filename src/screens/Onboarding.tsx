@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mascot } from '../components/Mascot'
 import { useProfile } from '../state/ProfileContext'
-import { LEVELS, type LevelId } from '../data/curriculum'
+import { getCurriculum, LEVELS, type LevelId } from '../data/curriculum'
 import { LUMI_INTRO, useGreeting } from '../hooks/useGreeting'
 
 const AVATARS = ['🦊', '🐼', '🐯', '🐰', '🐨', '🦁', '🐸', '🦄', '🐙']
@@ -127,7 +127,7 @@ export function Onboarding() {
           </p>
           <div className="stack">
             {LEVELS.map((l) => {
-              const ready = l.id === 'cp' || l.id === 'ce1'
+              const ready = getCurriculum(l.id).islands.length > 0
               return (
                 <button
                   key={l.id}

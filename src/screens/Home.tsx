@@ -345,7 +345,7 @@ export function Home() {
                 <span style={{ fontWeight: 800 }}>🎓 Mon niveau</span>
                 <div className="row" style={{ gap: 8 }}>
                   {LEVELS.map((l) => {
-                    const ready = l.id === 'cp' || l.id === 'ce1'
+                    const ready = getCurriculum(l.id).islands.length > 0
                     const active = profile.level === l.id
                     return (
                       <button

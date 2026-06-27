@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { closestRate, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Island, type Lesson } from '../data/curriculum'
 import { speak } from '../services/audio'
-import { LUMI_INTRO, useGreeting } from '../hooks/useGreeting'
 
 function Stat({ icon, value, label }: { icon: string; value: string | number; label: string }) {
   return (
@@ -85,8 +84,6 @@ export function Home() {
   const curriculum = getCurriculum(level)
   const levelMeta = LEVELS.find((l) => l.id === level)!
 
-  // Lumi se présente une fois à l'arrivée sur le jeu.
-  useGreeting(LUMI_INTRO)
 
   // Détermine l'état de chaque leçon : la première non terminée est "current".
   let foundCurrent = false

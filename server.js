@@ -38,11 +38,13 @@ async function sendFile(res, filePath, status = 200) {
 // conversationnel, sans jamais exposer la clé API au navigateur.
 const EL_KEY = process.env.ELEVENLABS_API_KEY
 const EL_VOICE = process.env.ELEVENLABS_VOICE_ID
-// turbo_v2_5 supporte l'ENFORCEMENT de la langue (language_code), ce qui évite
-// que des mots courts homographes de l'anglais (« chat », « a »…) soient
-// prononcés à l'anglaise. Surchargeable via ELEVENLABS_MODEL_ID.
-const EL_MODEL = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5'
-// On force le français quand le modèle le permet (turbo / flash).
+// multilingual_v2 = meilleure qualité de prononciation française avec une VRAIE
+// voix française : c'est lui qui prononce correctement les chiffres (« dix »,
+// « sept ») et les finales muettes (« loup »). Pas besoin de forcer la langue,
+// la voix étant déjà française. Surchargeable via ELEVENLABS_MODEL_ID
+// (ex. eleven_turbo_v2_5, qui force language_code=fr si la voix n'est pas FR).
+const EL_MODEL = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2'
+// language_code n'est supporté/utile que sur turbo / flash.
 const EL_FORCE_FR = /turbo|flash/.test(EL_MODEL)
 
 function readBody(req) {

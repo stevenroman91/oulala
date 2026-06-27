@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { closestRate, DAILY_GOAL, SPEECH_RATES, useProfile } from '../state/ProfileContext'
 import { getCurriculum, LEVELS, type Lesson } from '../data/curriculum'
-import { journeyStops } from '../data/france'
+import { costumeById, journeyStops, type Stop } from '../data/france'
+import { FranceMap, type MapStop } from '../components/FranceMap'
 import { dueCount } from '../data/review'
 import { speak } from '../services/audio'
+import { playFanfare } from '../services/audio'
 
 function Stat({ icon, value, label }: { icon: string; value: string | number; label: string }) {
   return (
@@ -79,9 +81,12 @@ function LessonNode({
 }
 
 export function Home() {
-  const { profile, toggleSound, setRate, setLevel, reset } = useProfile()
+  const { profile, toggleSound, setRate, setLevel, reset, unlockCostume, equipCostume } =
+    useProfile()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [story, setStory] = useState<Stop | null>(null)
+  const [celebration, setCelebration] = useState<Stop | null>(null)
   const level = profile.level!
   const curriculum = getCurriculum(level)
   const levelMeta = LEVELS.find((l) => l.id === level)!
@@ -99,6 +104,34 @@ export function Home() {
   const stops = journeyStops(level, curriculum)
   const regionDone = (islands: { lessons: Lesson[] }[]) =>
     islands.every((isl) => isl.lessons.every((l) => Boolean(profile.lessons[l.id])))
+
+  const mapStops: MapStop[] = stops.map(({ stop, islands }) => ({
+    id: stop.id,
+    region: stop.region,
+    emoji: stop.emoji,
+    color: stop.color,
+    coord: stop.coord,
+    done: regionDone(islands),
+  }))
+  const currentStop = stops.find(({ islands }) => !regionDone(islands))?.stop ?? null
+  const equippedCostume = costumeById(profile.costume)
+
+  // Débloque le costume d'une région terminée + déclenche la célébration.
+  useEffect(() => {
+    for (const { stop, islands } of stops) {
+      if (regionDone(islands) && !profile.costumes.includes(stop.costume.id)) {
+        unlockCostume(stop.costume.id)
+        setCelebration(stop)
+        playFanfare()
+        break
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.lessons])
+
+  function goToRegion(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   // Détermine l'état de chaque leçon : la première non terminée est "current".
   let foundCurrent = false
@@ -126,9 +159,18 @@ export function Home() {
             placeItems: 'center',
             fontSize: '2rem',
             boxShadow: '0 5px 0 rgba(58,46,42,0.12)',
+            position: 'relative',
           }}
         >
           {profile.avatar}
+          {equippedCostume && (
+            <span
+              style={{ position: 'absolute', top: -6, right: -6, fontSize: '1.1rem' }}
+              title={equippedCostume.name}
+            >
+              {equippedCostume.emoji}
+            </span>
+          )}
         </div>
         <div>
           <div style={{ fontWeight: 900, fontSize: '1.2rem' }}>
@@ -278,43 +320,25 @@ export function Home() {
         </div>
       ) : (
         <>
-          {/* Carnet de voyage : un tampon par région */}
-          <div className="card" style={{ borderRadius: 24 }}>
-            <div className="row" style={{ gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: '1.3rem' }}>🇫🇷</span>
-              <h2 style={{ fontSize: '1.05rem' }}>Mon voyage en France</h2>
-            </div>
-            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-              {stops.map(({ stop, islands }) => {
-                const done = regionDone(islands)
-                return (
-                  <div
-                    key={stop.id}
-                    title={stop.region}
-                    style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: '50%',
-                      display: 'grid',
-                      placeItems: 'center',
-                      fontSize: '1.4rem',
-                      background: done ? stop.color : 'var(--cream-deep)',
-                      filter: done ? 'none' : 'grayscale(0.6) opacity(0.7)',
-                      boxShadow: done ? '0 3px 0 rgba(58,46,42,0.18)' : 'none',
-                    }}
-                  >
-                    {done ? '⭐' : stop.emoji}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+          {/* La carte de France avec la progression de Lumi */}
+          <FranceMap
+            stops={mapStops}
+            currentId={currentStop?.id ?? null}
+            avatar={profile.avatar}
+            costumeEmoji={equippedCostume?.emoji}
+            onSelect={goToRegion}
+          />
 
           {/* Les étapes du voyage */}
           {stops.map(({ stop, islands }) => (
-            <div key={stop.id} className="stack" style={{ gap: 12 }}>
-              {/* Bannière de la région */}
-              <div
+            <div key={stop.id} id={stop.id} className="stack" style={{ gap: 12, scrollMarginTop: 12 }}>
+              {/* Bannière de la région + personnage */}
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setStory(stop)
+                  speak(stop.story)
+                }}
                 className="card row"
                 style={{
                   gap: 12,
@@ -322,18 +346,18 @@ export function Home() {
                   background: stop.color,
                   color: '#fff',
                   borderRadius: 22,
+                  textAlign: 'left',
                 }}
               >
                 <span style={{ fontSize: '2rem' }}>{stop.emoji}</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 900, fontSize: '1.15rem' }}>
-                    {stop.region}
-                  </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 900, fontSize: '1.15rem' }}>{stop.region}</div>
                   <div style={{ fontSize: '0.8rem', opacity: 0.95, fontWeight: 700 }}>
-                    {stop.blurb}
+                    {stop.character.emoji} {stop.character.name} · touche pour l'histoire
                   </div>
                 </div>
-              </div>
+                <span style={{ fontSize: '1.8rem' }}>{stop.character.emoji}</span>
+              </motion.button>
 
               {/* Les thèmes (îles) de la région */}
               {islands.map((island) => (
@@ -472,6 +496,50 @@ export function Home() {
                 </div>
               </div>
 
+              {/* Garde-robe : costumes de Lumi débloqués */}
+              {profile.costumes.length > 0 && (
+                <div className="stack" style={{ gap: 8 }}>
+                  <span style={{ fontWeight: 800 }}>🧥 La garde-robe de Lumi</span>
+                  <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => equipCostume(null)}
+                      className="card center"
+                      style={{
+                        width: 52,
+                        height: 52,
+                        fontSize: '1.4rem',
+                        padding: 0,
+                        outline: !profile.costume ? '4px solid var(--teal)' : '4px solid transparent',
+                      }}
+                      title="Sans costume"
+                    >
+                      🦊
+                    </button>
+                    {profile.costumes.map((cid) => {
+                      const c = costumeById(cid)
+                      if (!c) return null
+                      return (
+                        <button
+                          key={cid}
+                          onClick={() => equipCostume(cid)}
+                          className="card center"
+                          style={{
+                            width: 52,
+                            height: 52,
+                            fontSize: '1.4rem',
+                            padding: 0,
+                            outline: profile.costume === cid ? '4px solid var(--teal)' : '4px solid transparent',
+                          }}
+                          title={c.name}
+                        >
+                          {c.emoji}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               <button className="btn" onClick={() => setMenuOpen(false)}>
                 Continuer à jouer
               </button>
@@ -499,6 +567,85 @@ export function Home() {
               <p className="center muted" style={{ fontSize: '0.75rem', margin: 0 }}>
                 Lumi fonctionne sans compte : la progression reste sur cet appareil.
               </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mini-histoire du personnage de la région */}
+      <AnimatePresence>
+        {story && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setStory(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(58,46,42,0.45)', display: 'grid', placeItems: 'center', padding: 20, zIndex: 50 }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.85, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card stack center"
+              style={{ width: '100%', maxWidth: 380, gap: 14 }}
+            >
+              <div style={{ fontSize: '3.4rem' }}>{story.character.emoji}</div>
+              <h2 style={{ fontSize: '1.2rem' }}>{story.character.name}</h2>
+              <p style={{ fontWeight: 700, lineHeight: 1.4 }}>« {story.story} »</p>
+              <button className="btn btn--sun" onClick={() => speak(story.story)}>
+                🔊 Réécouter
+              </button>
+              <button className="btn" onClick={() => setStory(null)}>
+                C'est parti ! →
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Célébration : région terminée + costume débloqué */}
+      <AnimatePresence>
+        {celebration && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCelebration(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(58,46,42,0.55)', display: 'grid', placeItems: 'center', padding: 20, zIndex: 60 }}
+          >
+            <motion.div
+              initial={{ scale: 0.6, rotate: -6 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="card stack center"
+              style={{ width: '100%', maxWidth: 380, gap: 12 }}
+            >
+              <motion.div
+                animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.15, 1] }}
+                transition={{ duration: 0.6, repeat: 2 }}
+                style={{ fontSize: '3.6rem' }}
+              >
+                🎉
+              </motion.div>
+              <h2 style={{ fontSize: '1.3rem' }}>Bravo&nbsp;!</h2>
+              <p style={{ fontWeight: 800, margin: 0 }}>
+                Tu as terminé {celebration.region}&nbsp;!
+              </p>
+              <div
+                className="card stack center"
+                style={{ gap: 4, background: 'var(--cream)', width: '100%' }}
+              >
+                <div style={{ fontSize: '2.6rem' }}>{celebration.costume.emoji}</div>
+                <div style={{ fontWeight: 800 }}>Costume débloqué&nbsp;!</div>
+                <div className="muted" style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                  {celebration.costume.name}
+                </div>
+              </div>
+              <button className="btn btn--coral" onClick={() => setCelebration(null)}>
+                Super&nbsp;! 🎁
+              </button>
             </motion.div>
           </motion.div>
         )}

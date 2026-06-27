@@ -41,6 +41,9 @@ export interface Profile {
   lastActiveDate: string | null // AAAA-MM-JJ
   // Objectif du jour : XP gagnés aujourd'hui.
   daily: { date: string; xp: number }
+  // Costumes de Lumi débloqués (ids) + costume porté.
+  costumes: string[]
+  costume: string | null
   soundOn: boolean
   rate: number // vitesse de lecture de la voix (0.6 lent → 1.1 rapide)
 }
@@ -76,6 +79,8 @@ const DEFAULT_PROFILE: Profile = {
   streak: 0,
   lastActiveDate: null,
   daily: { date: '', xp: 0 },
+  costumes: [],
+  costume: null,
   soundOn: true,
   rate: 1,
 }
@@ -138,6 +143,8 @@ interface ProfileContextValue {
   recordLesson: (lessonId: string, stars: number, scorePct: number) => void
   learnWords: (words: { fr: string; emoji: string }[]) => void
   reviewWord: (fr: string, correct: boolean) => void
+  unlockCostume: (id: string) => void
+  equipCostume: (id: string | null) => void
   toggleSound: () => void
   setRate: (rate: number) => void
   reset: () => void
@@ -235,6 +242,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  // Débloque un costume (et l'équipe si c'est le premier).
+  const unlockCostume = useCallback((id: string) => {
+    setProfile((p) => {
+      if (p.costumes.includes(id)) return p
+      return {
+        ...p,
+        costumes: [...p.costumes, id],
+        costume: p.costume ?? id,
+      }
+    })
+  }, [])
+
+  const equipCostume = useCallback((id: string | null) => {
+    setProfile((p) => ({ ...p, costume: id }))
+  }, [])
+
   const toggleSound = useCallback(() => {
     setProfile((p) => ({ ...p, soundOn: !p.soundOn }))
   }, [])
@@ -256,6 +279,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       recordLesson,
       learnWords,
       reviewWord,
+      unlockCostume,
+      equipCostume,
       toggleSound,
       setRate,
       reset,
@@ -267,6 +292,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       recordLesson,
       learnWords,
       reviewWord,
+      unlockCostume,
+      equipCostume,
       toggleSound,
       setRate,
       reset,

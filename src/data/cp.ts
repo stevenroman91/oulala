@@ -116,7 +116,7 @@ export const cp: Curriculum = {
               ],
             },
             {
-              type: 'matchPairs',
+              type: 'memory',
               pairs: [
                 { fr: 'le chat', emoji: '🐱' },
                 { fr: 'le chien', emoji: '🐶' },
@@ -124,12 +124,15 @@ export const cp: Curriculum = {
               ],
             },
             {
-              type: 'pickImage',
-              prompt: { fr: 'le chat', emoji: '🐱' },
+              type: 'intruder',
+              prompt: 'Lequel n’est pas un animal ?',
               options: [
-                { fr: 'la vache', emoji: '🐮' },
                 { fr: 'le chat', emoji: '🐱' },
+                { fr: 'le chien', emoji: '🐶' },
+                { fr: 'la vache', emoji: '🐮' },
+                { fr: 'la pomme', emoji: '🍎' },
               ],
+              answer: 'la pomme',
             },
           ],
         },
@@ -407,6 +410,17 @@ export const cp: Curriculum = {
               ],
             },
             { type: 'spell', word: { fr: 'pomme', emoji: '🍎' }, missing: [0, 4] },
+            {
+              type: 'intruder',
+              prompt: 'Lequel n’est pas un fruit ?',
+              options: [
+                { fr: 'la pomme', emoji: '🍎' },
+                { fr: 'la fraise', emoji: '🍓' },
+                { fr: 'le raisin', emoji: '🍇' },
+                { fr: 'le chien', emoji: '🐶' },
+              ],
+              answer: 'le chien',
+            },
             { type: 'buildSentence', sentence: 'Je mange une pomme', emoji: '🍎' },
           ],
         },

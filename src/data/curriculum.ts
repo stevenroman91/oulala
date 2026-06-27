@@ -46,6 +46,9 @@ export type Exercise =
   | SpellExercise // orthographe / dictée : je complète le mot
   | ConjugateExercise // conjugaison : je choisis la bonne forme du verbe
   | ReadingExercise // lecture : je lis une phrase et je réponds
+  | MemoryExercise // mémoire : cartes retournées à apparier (mot ↔ image)
+  | SortExercise // tri : je range chaque mot dans la bonne catégorie (le/la…)
+  | IntruderExercise // logique : je trouve l'intrus
 
 export interface FlashcardExercise {
   type: 'flashcard'
@@ -98,6 +101,30 @@ export interface ReadingExercise {
   question: string // question de compréhension
   options: Word[] // réponses illustrées
   answer: string // « fr » de la bonne réponse
+}
+
+export interface MemoryExercise {
+  type: 'memory'
+  pairs: Word[] // 3 à 4 paires : on retourne les cartes pour apparier mot ↔ image
+}
+
+export interface SortGroup {
+  label: string // ex. « le », « la », « animaux », « fruits »
+  emoji: string
+}
+
+export interface SortExercise {
+  type: 'sort'
+  prompt: string // consigne, ex. « Range : le ou la ? »
+  groups: [SortGroup, SortGroup] // deux paniers
+  items: { word: Word; group: 0 | 1 }[] // chaque mot va dans le panier 0 ou 1
+}
+
+export interface IntruderExercise {
+  type: 'intruder'
+  prompt: string // ex. « Trouve l'intrus » / « Lequel n'est pas un animal ? »
+  options: Word[] // 4 images
+  answer: string // « fr » de l'intrus
 }
 
 export interface Lesson {

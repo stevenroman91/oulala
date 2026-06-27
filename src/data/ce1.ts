@@ -28,6 +28,20 @@ export const ce1: Curriculum = {
             { type: 'flashcard', word: { fr: 'le papa', emoji: '👨' } },
             { type: 'flashcard', word: { fr: 'la sœur', emoji: '👧' } },
             { type: 'flashcard', word: { fr: 'le frère', emoji: '👦' } },
+            {
+              type: 'sort',
+              prompt: 'Range : le ou la ?',
+              groups: [
+                { label: 'le', emoji: '👦' },
+                { label: 'la', emoji: '👧' },
+              ],
+              items: [
+                { word: { fr: 'papa', emoji: '👨' }, group: 0 },
+                { word: { fr: 'maman', emoji: '👩' }, group: 1 },
+                { word: { fr: 'frère', emoji: '👦' }, group: 0 },
+                { word: { fr: 'sœur', emoji: '👧' }, group: 1 },
+              ],
+            },
             { type: 'buildSentence', sentence: 'J’aime ma grande sœur', emoji: '👧' },
             { type: 'buildSentence', sentence: 'Mon papa est très grand', emoji: '👨' },
             { type: 'spell', word: { fr: 'frère', emoji: '👦' }, missing: [2, 3] },

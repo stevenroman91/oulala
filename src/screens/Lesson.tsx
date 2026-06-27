@@ -65,7 +65,13 @@ export function Lesson() {
   if (finished) {
     const result = profile.lessons[lesson.id]
     const stars = result?.stars ?? 1
-    return <LessonComplete lesson={lesson.title} stars={stars} onHome={() => navigate('/')} />
+    return (
+      <LessonComplete
+        lesson={lesson.title}
+        stars={stars}
+        onHome={() => navigate('/', { state: { focusLesson: lesson.id } })}
+      />
+    )
   }
 
   const exercise = lesson.exercises[index]
@@ -75,7 +81,7 @@ export function Lesson() {
       {/* En-tête : quitter + progression */}
       <div className="row" style={{ gap: 12 }}>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/', { state: { focusLesson: lesson.id } })}
           aria-label="Quitter"
           style={{
             fontSize: '1.6rem',

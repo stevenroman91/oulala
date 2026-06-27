@@ -77,7 +77,11 @@ async function ttsSynthesize(text, voiceOverride) {
         text,
         model_id: EL_MODEL,
         voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-        // Force la prononciation française quand le modèle le supporte.
+        // CONTEXTE français NON prononcé : oriente la prononciation pour qu'un
+        // mot isolé (« un », « orange », « blanc »…) soit lu en français et
+        // non deviné en anglais. Fix universel, sans liste de mots à maintenir.
+        previous_text: 'En français, écoute bien ce mot : ',
+        // Force aussi la langue quand le modèle le supporte (turbo / flash).
         ...(EL_FORCE_FR ? { language_code: 'fr' } : {}),
       }),
     },

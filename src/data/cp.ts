@@ -380,6 +380,37 @@ export const cp: Curriculum = {
             { type: 'spell', word: { fr: 'main', emoji: '✋' }, missing: [0, 1] },
           ],
         },
+        {
+          id: 'cp-corps-2',
+          title: 'La tête et le reste',
+          emoji: '🧠',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'la tête', emoji: '🗣️' } },
+            { type: 'flashcard', word: { fr: 'le nez', emoji: '👃' } },
+            { type: 'flashcard', word: { fr: 'le bras', emoji: '💪' } },
+            { type: 'flashcard', word: { fr: 'la jambe', emoji: '🦵' } },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'le nez', emoji: '👃' },
+                { fr: 'le bras', emoji: '💪' },
+                { fr: 'la jambe', emoji: '🦵' },
+              ],
+            },
+            {
+              type: 'intruder',
+              prompt: 'Lequel n’est pas une partie du corps ?',
+              options: [
+                { fr: 'le nez', emoji: '👃' },
+                { fr: 'le bras', emoji: '💪' },
+                { fr: 'la jambe', emoji: '🦵' },
+                { fr: 'la voiture', emoji: '🚗' },
+              ],
+              answer: 'la voiture',
+            },
+            { type: 'spell', word: { fr: 'nez', emoji: '👃' }, missing: [0, 2] },
+          ],
+        },
       ],
     },
 
@@ -487,6 +518,284 @@ export const cp: Curriculum = {
             { type: 'spell', word: { fr: 'pomme', emoji: '🍎' }, missing: [0, 1, 4] },
             { type: 'spell', word: { fr: 'main', emoji: '✋' }, missing: [0, 1, 2, 3] },
             { type: 'spell', word: { fr: 'poule', emoji: '🐔' }, missing: [0, 1, 2, 3, 4] },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LES VÊTEMENTS */
+    {
+      id: 'cp-vetements',
+      title: 'Les vêtements',
+      emoji: '👕',
+      color: 'var(--grape)',
+      lessons: [
+        {
+          id: 'cp-vetements-1',
+          title: 'Je m’habille',
+          emoji: '🧥',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'le pull', emoji: '🧥' } },
+            { type: 'flashcard', word: { fr: 'le pantalon', emoji: '👖' } },
+            { type: 'flashcard', word: { fr: 'la robe', emoji: '👗' } },
+            { type: 'flashcard', word: { fr: 'le chapeau', emoji: '🎩' } },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'le pull', emoji: '🧥' },
+                { fr: 'le pantalon', emoji: '👖' },
+                { fr: 'la robe', emoji: '👗' },
+              ],
+            },
+            {
+              type: 'pickImage',
+              prompt: { fr: 'le chapeau', emoji: '🎩' },
+              options: [
+                { fr: 'la robe', emoji: '👗' },
+                { fr: 'le chapeau', emoji: '🎩' },
+                { fr: 'le pull', emoji: '🧥' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'Je mets un beau chapeau', emoji: '🎩' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LA MAISON */
+    {
+      id: 'cp-maison',
+      title: 'La maison',
+      emoji: '🏠',
+      color: 'var(--sun-deep)',
+      lessons: [
+        {
+          id: 'cp-maison-1',
+          title: 'Dans ma maison',
+          emoji: '🛋️',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'la porte', emoji: '🚪' } },
+            { type: 'flashcard', word: { fr: 'la fenêtre', emoji: '🪟' } },
+            { type: 'flashcard', word: { fr: 'la table', emoji: '🪑' } },
+            { type: 'flashcard', word: { fr: 'la clé', emoji: '🔑' } },
+            {
+              type: 'matchPairs',
+              pairs: [
+                { fr: 'la porte', emoji: '🚪' },
+                { fr: 'la fenêtre', emoji: '🪟' },
+                { fr: 'la clé', emoji: '🔑' },
+              ],
+            },
+            { type: 'spell', word: { fr: 'porte', emoji: '🚪' }, missing: [0, 4] },
+            {
+              type: 'intruder',
+              prompt: 'Lequel n’est pas dans la maison ?',
+              options: [
+                { fr: 'la porte', emoji: '🚪' },
+                { fr: 'la table', emoji: '🪑' },
+                { fr: 'la fenêtre', emoji: '🪟' },
+                { fr: 'le poisson', emoji: '🐟' },
+              ],
+              answer: 'le poisson',
+            },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LES JOUETS */
+    {
+      id: 'cp-jouets',
+      title: 'Les jouets',
+      emoji: '🧸',
+      color: 'var(--coral)',
+      lessons: [
+        {
+          id: 'cp-jouets-1',
+          title: 'Je joue',
+          emoji: '🪀',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'le ballon', emoji: '⚽' } },
+            { type: 'flashcard', word: { fr: 'la poupée', emoji: '🪆' } },
+            { type: 'flashcard', word: { fr: 'le vélo', emoji: '🚲' } },
+            { type: 'flashcard', word: { fr: 'l’ours', emoji: '🧸' } },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'le ballon', emoji: '⚽' },
+                { fr: 'la poupée', emoji: '🪆' },
+                { fr: 'le vélo', emoji: '🚲' },
+                { fr: 'l’ours', emoji: '🧸' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'Je joue avec mon ballon', emoji: '⚽' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- ENCORE DES SONS */
+    {
+      id: 'cp-sons2',
+      title: 'Les sons (suite)',
+      emoji: '🔡',
+      color: 'var(--teal)',
+      lessons: [
+        {
+          id: 'cp-sons-oi',
+          title: 'Le son « oi »',
+          emoji: '⭐',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'l’oiseau', emoji: '🐦' } },
+            { type: 'flashcard', word: { fr: 'la poire', emoji: '🍐' } },
+            { type: 'flashcard', word: { fr: 'le roi', emoji: '🤴' } },
+            { type: 'listenWord', answer: 'roi', options: ['roi', 'rat'] },
+            { type: 'listenWord', answer: 'poire', options: ['poire', 'porte'] },
+            { type: 'spell', word: { fr: 'roi', emoji: '🤴' }, missing: [1, 2] },
+          ],
+        },
+        {
+          id: 'cp-sons-an',
+          title: 'Le son « an »',
+          emoji: '🐘',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'l’éléphant', emoji: '🐘' } },
+            { type: 'flashcard', word: { fr: 'le gant', emoji: '🧤' } },
+            { type: 'flashcard', word: { fr: 'la dent', emoji: '🦷' } },
+            { type: 'listenWord', answer: 'gant', options: ['gant', 'gâteau'] },
+            {
+              type: 'matchPairs',
+              pairs: [
+                { fr: 'l’éléphant', emoji: '🐘' },
+                { fr: 'le gant', emoji: '🧤' },
+                { fr: 'la dent', emoji: '🦷' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LES ÉMOTIONS */
+    {
+      id: 'cp-emotions',
+      title: 'Les émotions',
+      emoji: '😀',
+      color: 'var(--sun-deep)',
+      lessons: [
+        {
+          id: 'cp-emotions-1',
+          title: 'Comment je me sens ?',
+          emoji: '🥰',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'content', emoji: '😀' } },
+            { type: 'flashcard', word: { fr: 'triste', emoji: '😢' } },
+            { type: 'flashcard', word: { fr: 'fâché', emoji: '😠' } },
+            { type: 'flashcard', word: { fr: 'fatigué', emoji: '😴' } },
+            { type: 'flashcard', word: { fr: 'surpris', emoji: '😮' } },
+            {
+              type: 'pickImage',
+              prompt: { fr: 'triste', emoji: '😢' },
+              options: [
+                { fr: 'content', emoji: '😀' },
+                { fr: 'triste', emoji: '😢' },
+                { fr: 'fâché', emoji: '😠' },
+                { fr: 'fatigué', emoji: '😴' },
+              ],
+            },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'content', emoji: '😀' },
+                { fr: 'triste', emoji: '😢' },
+                { fr: 'fâché', emoji: '😠' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'Aujourd’hui je suis content', emoji: '😀' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- LES 5 SENS */
+    {
+      id: 'cp-sens',
+      title: 'Les 5 sens',
+      emoji: '👀',
+      color: 'var(--grape)',
+      lessons: [
+        {
+          id: 'cp-sens-1',
+          title: 'Je vois, j’entends…',
+          emoji: '🖐️',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'voir', emoji: '👁️' } },
+            { type: 'flashcard', word: { fr: 'entendre', emoji: '👂' } },
+            { type: 'flashcard', word: { fr: 'sentir', emoji: '👃' } },
+            { type: 'flashcard', word: { fr: 'toucher', emoji: '✋' } },
+            { type: 'flashcard', word: { fr: 'goûter', emoji: '👅' } },
+            {
+              type: 'matchPairs',
+              pairs: [
+                { fr: 'voir', emoji: '👁️' },
+                { fr: 'entendre', emoji: '👂' },
+                { fr: 'sentir', emoji: '👃' },
+                { fr: 'goûter', emoji: '👅' },
+              ],
+            },
+            {
+              type: 'pickImage',
+              prompt: { fr: 'toucher', emoji: '✋' },
+              options: [
+                { fr: 'voir', emoji: '👁️' },
+                { fr: 'toucher', emoji: '✋' },
+                { fr: 'goûter', emoji: '👅' },
+              ],
+            },
+            { type: 'buildSentence', sentence: 'Avec les yeux je peux voir', emoji: '👁️' },
+          ],
+        },
+      ],
+    },
+
+    /* -------------------------------------------------- ANIMAUX DE LA MER */
+    {
+      id: 'cp-mer',
+      title: 'Les animaux de la mer',
+      emoji: '🌊',
+      color: 'var(--sky)',
+      lessons: [
+        {
+          id: 'cp-mer-1',
+          title: 'Dans l’océan',
+          emoji: '🐠',
+          exercises: [
+            { type: 'flashcard', word: { fr: 'le poisson', emoji: '🐟' } },
+            { type: 'flashcard', word: { fr: 'le requin', emoji: '🦈' } },
+            { type: 'flashcard', word: { fr: 'la baleine', emoji: '🐳' } },
+            { type: 'flashcard', word: { fr: 'le crabe', emoji: '🦀' } },
+            { type: 'flashcard', word: { fr: 'la pieuvre', emoji: '🐙' } },
+            {
+              type: 'memory',
+              pairs: [
+                { fr: 'le requin', emoji: '🦈' },
+                { fr: 'la baleine', emoji: '🐳' },
+                { fr: 'le crabe', emoji: '🦀' },
+                { fr: 'la pieuvre', emoji: '🐙' },
+              ],
+            },
+            {
+              type: 'intruder',
+              prompt: 'Lequel ne vit pas dans la mer ?',
+              options: [
+                { fr: 'le poisson', emoji: '🐟' },
+                { fr: 'le crabe', emoji: '🦀' },
+                { fr: 'la pieuvre', emoji: '🐙' },
+                { fr: 'le lapin', emoji: '🐰' },
+              ],
+              answer: 'le lapin',
+            },
+            { type: 'spell', word: { fr: 'crabe', emoji: '🦀' }, missing: [0, 2, 4] },
           ],
         },
       ],

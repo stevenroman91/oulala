@@ -81,8 +81,16 @@ function LessonNode({
 }
 
 export function Home() {
-  const { profile, toggleSound, setRate, setLevel, switchToPicker, unlockCostume, equipCostume } =
-    useProfile()
+  const {
+    profile,
+    toggleSound,
+    setRate,
+    setLevel,
+    switchToPicker,
+    deleteProfile,
+    unlockCostume,
+    equipCostume,
+  } = useProfile()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [story, setStory] = useState<Stop | null>(null)
@@ -554,6 +562,28 @@ export function Home() {
                 }}
               >
                 👋 Changer de joueur
+              </button>
+
+              <button
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Supprimer le compte de ${profile.name} et toute sa progression ? C'est définitif.`,
+                    )
+                  ) {
+                    deleteProfile(profile.id)
+                    navigate('/profils', { replace: true })
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  color: 'var(--coral-deep)',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  padding: 6,
+                }}
+              >
+                🗑️ Supprimer ce compte
               </button>
 
               <p className="center muted" style={{ fontSize: '0.75rem', margin: 0 }}>

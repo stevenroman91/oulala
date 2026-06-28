@@ -179,6 +179,8 @@ interface ProfileContextValue {
   selectProfile: (id: string) => void
   deleteProfile: (id: string) => void
   switchToPicker: () => void
+  setName: (name: string) => void
+  setAvatar: (avatar: string) => void
   setLevel: (level: LevelId) => void
   recordLesson: (lessonId: string, stars: number, scorePct: number) => void
   learnWords: (words: { fr: string; emoji: string }[]) => void
@@ -246,6 +248,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // --- Mutations du profil actif ---
+  const setName = useCallback(
+    (name: string) => updateActive((p) => ({ ...p, name: name.trim() || p.name })),
+    [updateActive],
+  )
+
+  const setAvatar = useCallback(
+    (avatar: string) => updateActive((p) => ({ ...p, avatar })),
+    [updateActive],
+  )
+
   const setLevel = useCallback(
     (level: LevelId) => updateActive((p) => ({ ...p, level })),
     [updateActive],
@@ -344,6 +356,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       selectProfile,
       deleteProfile,
       switchToPicker,
+      setName,
+      setAvatar,
       setLevel,
       recordLesson,
       learnWords,
@@ -361,6 +375,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       selectProfile,
       deleteProfile,
       switchToPicker,
+      setName,
+      setAvatar,
       setLevel,
       recordLesson,
       learnWords,

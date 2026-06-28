@@ -90,6 +90,8 @@ export function Home() {
     setLevel,
     switchToPicker,
     deleteProfile,
+    setName,
+    setAvatar,
     unlockCostume,
     equipCostume,
   } = useProfile()
@@ -97,6 +99,8 @@ export function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [story, setStory] = useState<Stop | null>(null)
   const [celebration, setCelebration] = useState<Stop | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
   const level = profile.level!
   const curriculum = getCurriculum(level)
   const levelMeta = LEVELS.find((l) => l.id === level)!
@@ -448,10 +452,81 @@ export function Home() {
               <div className="center" style={{ fontSize: '3rem' }}>
                 {profile.avatar}
               </div>
-              <h2 className="center" style={{ fontSize: '1.3rem' }}>
-                {profile.name}
-              </h2>
-              <p className="center muted" style={{ marginTop: -8, fontWeight: 700 }}>
+
+              {/* Prénom modifiable */}
+              {editingName ? (
+                <div className="row" style={{ gap: 8 }}>
+                  <input
+                    autoFocus
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    maxLength={16}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setName(nameDraft)
+                        setEditingName(false)
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      fontFamily: 'inherit',
+                      fontSize: '1.2rem',
+                      fontWeight: 800,
+                      textAlign: 'center',
+                      padding: '10px 12px',
+                      borderRadius: 16,
+                      border: '3px solid var(--cream-deep)',
+                      outline: 'none',
+                      color: 'var(--ink)',
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      setName(nameDraft)
+                      setEditingName(false)
+                    }}
+                    className="audio-pill"
+                    style={{ width: 48, height: 48, minWidth: 48, fontSize: '1.2rem' }}
+                    aria-label="Enregistrer le prénom"
+                  >
+                    ✓
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setNameDraft(profile.name)
+                    setEditingName(true)
+                  }}
+                  className="row"
+                  style={{ gap: 8, alignSelf: 'center', background: 'none' }}
+                >
+                  <h2 style={{ fontSize: '1.3rem' }}>{profile.name}</h2>
+                  <span style={{ fontSize: '1rem' }}>✏️</span>
+                </button>
+              )}
+
+              {/* Choisir un autre avatar */}
+              <div className="row" style={{ gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {['🦊', '🐼', '🐯', '🐰', '🐨', '🦁', '🐸', '🦄', '🐙'].map((a) => (
+                  <button
+                    key={a}
+                    onClick={() => setAvatar(a)}
+                    style={{
+                      fontSize: '1.4rem',
+                      width: 38,
+                      height: 38,
+                      borderRadius: 12,
+                      background: profile.avatar === a ? 'var(--cream-deep)' : 'transparent',
+                      outline: profile.avatar === a ? '3px solid var(--teal)' : 'none',
+                    }}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+
+              <p className="center muted" style={{ marginTop: -4, fontWeight: 700 }}>
                 Niveau {levelMeta.label} · ⭐ {profile.xp} points
               </p>
 

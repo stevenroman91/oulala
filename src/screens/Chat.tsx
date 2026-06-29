@@ -111,14 +111,58 @@ export function Chat() {
    Bouton « parler », bouton COUPER LE MICRO (pour poser une
    question à son prof sans que Lumi écoute), et bouton « stop ».
    --------------------------------------------------------------- */
+type Turn = { role: 'user' | 'ai'; text: string }
+
 function LiveAgent({ agentId }: { agentId: string }) {
-  const conv = useConversation()
+  const [transcript, setTranscript] = useState<Turn[]>([])
+  // Ref lue dans le callback onMessage (sa closure ne voit pas le state à jour).
+  const textModeRef = useRef(false)
+  const conv = useConversation({
+    // On ne garde le TEXTE des messages QUE en mode écrit. En mode voix,
+    // « si je parle, que en voix » : aucune bulle texte.
+    onMessage: (m: { message: string; source: 'user' | 'ai' }) => {
+      if (!m.message || !textModeRef.current) return
+      setTranscript((t) => [...t, { role: m.source, text: m.message }])
+    },
+  })
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
+  // Mode écrit : quand l'enfant tape, Lumi répond UNIQUEMENT en texte
+  // (on coupe sa voix). Un bouton permet de revenir au mode voix.
+  const [textMode, setTextMode] = useState(false)
 
   const status = conv.status // 'disconnected' | 'connecting' | 'connected' | 'error'
   const connected = status === 'connected'
   const isMuted = conv.isMuted
+  const [draft, setDraft] = useState('')
+  const scroller = useRef<HTMLDivElement | null>(null)
+
+  // Auto-défilement vers le dernier message.
+  useEffect(() => {
+    const el = scroller.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [transcript])
+
+  function enterTextMode() {
+    textModeRef.current = true
+    setTextMode(true)
+    conv.setVolume({ volume: 0 }) // Lumi se tait : réponse en texte seulement.
+    conv.setMuted(true) // micro coupé : on est en mode écrit.
+  }
+  function enterVoiceMode() {
+    textModeRef.current = false
+    setTextMode(false)
+    conv.setVolume({ volume: 1 }) // Lumi reparle.
+    conv.setMuted(false)
+  }
+
+  function send() {
+    const t = draft.trim()
+    if (!t) return
+    if (!textMode) enterTextMode() // écrire ⇒ Lumi répond en texte.
+    conv.sendUserMessage(t)
+    setDraft('')
+  }
 
   async function start() {
     setError(null)
@@ -153,13 +197,11 @@ function LiveAgent({ agentId }: { agentId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const stateLabel = !connected
-    ? ''
-    : isMuted
-    ? '🤫 Micro coupé — Lumi attend'
+  const stateLabel = isMuted
+    ? '🤫 Micro coupé'
     : conv.isSpeaking
     ? '🗣️ Lumi parle…'
-    : '👂 Lumi t’écoute, parle !'
+    : '🎧 À toi de parler'
 
   return (
     <div className="stack" style={{ gap: 18, flex: 1 }}>
@@ -180,16 +222,51 @@ function LiveAgent({ agentId }: { agentId: string }) {
         </motion.div>
       </div>
 
-      {connected && (
-        <motion.div
-          key={stateLabel}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card center"
-          style={{ fontSize: '1.15rem', fontWeight: 800 }}
+      {/* Indicateur d'état CALME — uniquement en mode VOIX (en mode écrit,
+          c'est le fil de discussion qui parle). Texte qui change sur place,
+          sans encadré qui saute. */}
+      {connected && !textMode && (
+        <div
+          className="center"
+          style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)', opacity: 0.7, minHeight: 22 }}
         >
           {stateLabel}
-        </motion.div>
+        </div>
+      )}
+
+      {/* Fil de discussion — affiché UNIQUEMENT en mode écrit (« si j'écris,
+          Lumi répond en texte »). En mode voix, pas de bulles : que de l'audio. */}
+      {connected && textMode && (
+        <div
+          ref={scroller}
+          className="card stack"
+          style={{ gap: 8, maxHeight: 300, overflowY: 'auto', padding: 12 }}
+        >
+          {transcript.length === 0 ? (
+            <p className="muted center" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Écris un message à Lumi, elle te répond ici ✍️
+            </p>
+          ) : (
+            transcript.map((turn, idx) => (
+              <div
+                key={idx}
+                style={{
+                  alignSelf: turn.role === 'user' ? 'flex-end' : 'flex-start',
+                  maxWidth: '85%',
+                  background: turn.role === 'user' ? 'var(--sun)' : 'var(--cream)',
+                  color: 'var(--ink)',
+                  borderRadius: 16,
+                  padding: '9px 14px',
+                  fontWeight: 600,
+                  fontSize: '0.98rem',
+                }}
+              >
+                {turn.role === 'ai' && <span style={{ marginRight: 4 }}>🦊</span>}
+                {turn.text}
+              </div>
+            ))
+          )}
+        </div>
       )}
 
       {!connected ? (
@@ -203,28 +280,79 @@ function LiveAgent({ agentId }: { agentId: string }) {
         </button>
       ) : (
         <div className="stack" style={{ gap: 12 }}>
-          {/* Couper / rouvrir le micro : l'enfant peut faire une pause
-              (par ex. poser une question à son prof) sans fermer Lumi. */}
-          <button
-            className="btn"
-            onClick={() => conv.setMuted(!isMuted)}
-            style={{
-              maxWidth: 300,
-              margin: '0 auto',
-              fontSize: '1.1rem',
-              background: isMuted ? 'var(--good)' : 'var(--sun)',
-              color: isMuted ? '#fff' : 'var(--ink)',
-              boxShadow: isMuted ? '0 6px 0 var(--good-deep)' : '0 6px 0 var(--sun-deep)',
+          {/* MODE VOIX : couper / rouvrir le micro (pause pour poser une
+              question à son prof, etc.). Caché en mode écrit. */}
+          {!textMode && (
+            <>
+              <button
+                className="btn"
+                onClick={() => conv.setMuted(!isMuted)}
+                style={{
+                  maxWidth: 300,
+                  margin: '0 auto',
+                  fontSize: '1.1rem',
+                  background: isMuted ? 'var(--good)' : 'var(--sun)',
+                  color: isMuted ? '#fff' : 'var(--ink)',
+                  boxShadow: isMuted ? '0 6px 0 var(--good-deep)' : '0 6px 0 var(--sun-deep)',
+                }}
+              >
+                {isMuted ? '🎤 Reprendre la parole' : '🤫 Couper mon micro'}
+              </button>
+              {isMuted && (
+                <p className="muted center" style={{ fontSize: '0.85rem', margin: 0 }}>
+                  Ton micro est coupé. Tu peux poser une question à ton prof,
+                  puis appuie sur « Reprendre la parole ».
+                </p>
+              )}
+            </>
+          )}
+
+          {/* MODE ÉCRIT : revenir à la voix. */}
+          {textMode && (
+            <button
+              className="btn btn--sun"
+              onClick={enterVoiceMode}
+              style={{ maxWidth: 300, margin: '0 auto', fontSize: '1.05rem' }}
+            >
+              🔊 Parler à voix haute
+            </button>
+          )}
+
+          {/* Écrire à Lumi. Taper un message bascule en mode écrit : Lumi
+              répond alors UNIQUEMENT en texte (sa voix est coupée). */}
+          <form
+            className="row"
+            style={{ gap: 8 }}
+            onSubmit={(e) => {
+              e.preventDefault()
+              send()
             }}
           >
-            {isMuted ? '🎤 Reprendre la parole' : '🤫 Couper mon micro'}
-          </button>
-          {isMuted && (
-            <p className="muted center" style={{ fontSize: '0.85rem', margin: 0 }}>
-              Ton micro est coupé. Tu peux poser une question à ton prof,
-              puis appuie sur « Reprendre la parole ».
-            </p>
-          )}
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={textMode ? 'Écris à Lumi…' : 'Ou écris à Lumi…'}
+              aria-label="Écrire à Lumi"
+              style={{
+                flex: 1,
+                border: '2px solid rgba(58,46,42,0.15)',
+                borderRadius: 14,
+                padding: '12px 14px',
+                fontSize: '1rem',
+                fontFamily: 'inherit',
+                background: '#fff',
+              }}
+            />
+            <button
+              type="submit"
+              className="btn"
+              disabled={!draft.trim()}
+              style={{ width: 'auto', padding: '0 18px', opacity: draft.trim() ? 1 : 0.5 }}
+            >
+              Envoyer
+            </button>
+          </form>
+
           <button
             className="btn btn--ghost"
             onClick={stop}

@@ -118,11 +118,13 @@ function LiveAgent({ agentId }: { agentId: string }) {
   // Ref lue dans le callback onMessage (sa closure ne voit pas le state à jour).
   const textModeRef = useRef(false)
   const conv = useConversation({
-    // On ne garde le TEXTE des messages QUE en mode écrit. En mode voix,
-    // « si je parle, que en voix » : aucune bulle texte.
+    // On n'affiche les RÉPONSES de Lumi (source 'ai') et seulement en mode
+    // écrit. Les messages de l'enfant, eux, sont ajoutés tout de suite à
+    // l'envoi (cf. send()) : ça garantit qu'il voit EXACTEMENT ce qu'il a
+    // tapé, et ça évite les transcriptions vocales parasites (« … »).
     onMessage: (m: { message: string; source: 'user' | 'ai' }) => {
-      if (!m.message || !textModeRef.current) return
-      setTranscript((t) => [...t, { role: m.source, text: m.message }])
+      if (!m.message || m.source !== 'ai' || !textModeRef.current) return
+      setTranscript((t) => [...t, { role: 'ai', text: m.message }])
     },
   })
   const [error, setError] = useState<string | null>(null)
@@ -160,6 +162,7 @@ function LiveAgent({ agentId }: { agentId: string }) {
     const t = draft.trim()
     if (!t) return
     if (!textMode) enterTextMode() // écrire ⇒ Lumi répond en texte.
+    setTranscript((prev) => [...prev, { role: 'user', text: t }]) // ta bulle, tout de suite.
     conv.sendUserMessage(t)
     setDraft('')
   }
@@ -330,7 +333,12 @@ function LiveAgent({ agentId }: { agentId: string }) {
           >
             <input
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value)
+                // Signale à Lumi que l'enfant est en train d'écrire, pour
+                // qu'elle ne le relance pas (« je ne t'entends plus »).
+                if (connected) conv.sendUserActivity()
+              }}
               placeholder={textMode ? 'Écris à Lumi…' : 'Ou écris à Lumi…'}
               aria-label="Écrire à Lumi"
               style={{
